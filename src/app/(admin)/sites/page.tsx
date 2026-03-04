@@ -3,11 +3,11 @@ import { getSites } from "@/application/site/site-actions";
 import SitesList from "@/components/sites/SitesList";
 
 export const metadata: Metadata = {
-  title: "Dashboard | WP Dash",
-  description: "Manage your WordPress sites from a single dashboard",
+  title: "Sites | WP Dash",
+  description: "Manage your WordPress sites",
 };
 
-export default async function Dashboard() {
+export default async function SitesPage() {
   const result = await getSites();
   const sites = result.success ? result.data : [];
   return <SitesList initialSites={sites} />;
