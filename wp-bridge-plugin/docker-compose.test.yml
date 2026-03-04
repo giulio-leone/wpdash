@@ -1,0 +1,77 @@
+services:
+  wordpress:
+    image: wordpress:6.7-php8.2-apache
+    container_name: wpdash-test-wp
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DEBUG: "1"
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./:/var/www/html/wp-content/plugins/wp-dash-bridge
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: wpdash-test-db
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  wpcli:
+    image: wordpress:cli-2.10-php8.2
+    container_name: wpdash-test-cli
+    depends_on:
+      wordpress:
+        condition: service_started
+      db:
+        condition: service_healthy
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./:/var/www/html/wp-content/plugins/wp-dash-bridge
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "Waiting for WordPress..."
+        sleep 10
+        wp core install \
+          --url=http://localhost:8080 \
+          --title="WP Dash Test Site" \
+          --admin_user=admin \
+          --admin_password=admin123 \
+          --admin_email=admin@test.local \
+          --skip-email
+        wp plugin activate wp-dash-bridge
+        echo "=== WordPress installed and plugin activated ==="
+        echo "=== Checking plugin status ==="
+        wp plugin list --format=table
+        echo "=== Getting initial token from transient ==="
+        wp transient get wpdash_bridge_initial_token
+        echo "=== SETUP COMPLETE ==="
+    user: "33:33"
+
+volumes:
+  wordpress_data:
+  db_data:
