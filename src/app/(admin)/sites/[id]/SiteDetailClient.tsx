@@ -5,6 +5,17 @@ import type { Site } from "@/domain/site/entity";
 import { regenerateToken } from "@/application/site/site-actions";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
+import LogSummary from "@/components/logs/LogSummary";
+import LogViewer from "@/components/logs/LogViewer";
+import BackupWidget from "@/components/backup/BackupWidget";
+import BackupHistory from "@/components/backup/BackupHistory";
+import BackupAlert from "@/components/backup/BackupAlert";
+import UptimeWidget from "@/components/uptime/UptimeWidget";
+import UptimeHistory from "@/components/uptime/UptimeHistory";
+import SecurityWidget from "@/components/security/SecurityWidget";
+import PluginsList from "@/components/plugins/PluginsList";
+import SeoWidget from "@/components/seo/SeoWidget";
+import SeoDetails from "@/components/seo/SeoDetails";
 import { cn } from "@/lib/cn";
 
 const tabs = ["Overview", "Uptime", "Security", "Plugins", "SEO", "Logs", "Backup"] as const;
@@ -18,6 +29,7 @@ function statusBadgeColor(status: string): "success" | "error" | "light" {
 export default function SiteDetailClient({ site }: { site: Site }) {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Overview");
   const [regenToken, setRegenToken] = useState<string | null>(null);
+  const [seoRefreshKey, setSeoRefreshKey] = useState(0);
 
   async function handleRegenerate() {
     if (!confirm("Regenerate the API token? The old token will stop working.")) return;
@@ -108,6 +120,34 @@ export default function SiteDetailClient({ site }: { site: Site }) {
         {activeTab === "Overview" ? (
           <div className="text-sm text-gray-500 dark:text-gray-400">
             <p>Site overview information will appear here once your WordPress plugin starts reporting data.</p>
+          </div>
+        ) : activeTab === "Uptime" ? (
+          <div className="space-y-6">
+            <UptimeWidget siteId={site.id} />
+            <UptimeHistory siteId={site.id} />
+          </div>
+        ) : activeTab === "Security" ? (
+          <SecurityWidget siteId={site.id} />
+        ) : activeTab === "Plugins" ? (
+          <PluginsList siteId={site.id} />
+        ) : activeTab === "SEO" ? (
+          <div className="space-y-6">
+            <SeoWidget
+              siteId={site.id}
+              onAuditComplete={() => setSeoRefreshKey((k) => k + 1)}
+            />
+            <SeoDetails siteId={site.id} refreshKey={seoRefreshKey} />
+          </div>
+        ) : activeTab === "Logs" ? (
+          <div className="space-y-6">
+            <LogSummary siteId={site.id} />
+            <LogViewer siteId={site.id} />
+          </div>
+        ) : activeTab === "Backup" ? (
+          <div className="space-y-6">
+            <BackupAlert siteId={site.id} />
+            <BackupWidget siteId={site.id} />
+            <BackupHistory siteId={site.id} />
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
