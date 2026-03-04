@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/reset-password")
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/signin";
+    url.pathname = "/signin";
     return NextResponse.redirect(url);
   }
 
