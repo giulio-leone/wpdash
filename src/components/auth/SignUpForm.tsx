@@ -2,13 +2,15 @@
 import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
+import { signUp } from "@/application/user/auth-actions";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useActionState, useState } from "react";
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [state, formAction, isPending] = useActionState(signUp, {});
   return (
     <div className="no-scrollbar flex w-full flex-1 flex-col overflow-y-auto lg:w-1/2">
       <div className="mx-auto mb-5 w-full max-w-md sm:pt-10">
@@ -83,7 +85,17 @@ export default function SignUpForm() {
                 </span>
               </div>
             </div>
-            <form>
+            {state.error && (
+              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                {state.error}
+              </div>
+            )}
+            {state.success && (
+              <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/20 dark:text-green-400">
+                Check your email for a verification link to complete registration.
+              </div>
+            )}
+            <form action={formAction}>
               <div className="space-y-5">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   {/* <!-- First Name --> */}
@@ -122,6 +134,7 @@ export default function SignUpForm() {
                     <Input
                       placeholder="Enter your password"
                       type={showPassword ? "text" : "password"}
+                      name="password"
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -146,8 +159,12 @@ export default function SignUpForm() {
                 </div>
                 {/* <!-- Button --> */}
                 <div>
-                  <button className="bg-brand-500 shadow-theme-xs hover:bg-brand-600 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-white transition">
-                    Sign Up
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-white transition"
+                  >
+                    {isPending ? "Signing up…" : "Sign Up"}
                   </button>
                 </div>
               </div>

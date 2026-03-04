@@ -2,14 +2,15 @@
 import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import Button from "@/components/ui/button/Button";
+import { signIn } from "@/application/user/auth-actions";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useActionState, useState } from "react";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [state, formAction, isPending] = useActionState(signIn, {});
   return (
     <div className="flex w-full flex-1 flex-col lg:w-1/2">
       <div className="mx-auto mb-5 w-full max-w-md sm:pt-10">
@@ -84,13 +85,18 @@ export default function SignInForm() {
                 </span>
               </div>
             </div>
-            <form>
+            {state.error && (
+              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                {state.error}
+              </div>
+            )}
+            <form action={formAction}>
               <div className="space-y-6">
                 <div>
                   <Label>
                     Email <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input placeholder="info@gmail.com" type="email" />
+                  <Input placeholder="info@gmail.com" type="email" name="email" />
                 </div>
                 <div>
                   <Label>
@@ -100,6 +106,7 @@ export default function SignInForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
+                      name="password"
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -128,9 +135,13 @@ export default function SignInForm() {
                   </Link>
                 </div>
                 <div>
-                  <Button className="w-full" size="sm">
-                    Sign in
-                  </Button>
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-white transition"
+                  >
+                    {isPending ? "Signing in…" : "Sign in"}
+                  </button>
                 </div>
               </div>
             </form>
