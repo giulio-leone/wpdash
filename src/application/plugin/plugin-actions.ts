@@ -56,6 +56,27 @@ function mapBridgeToPlugin(
   };
 }
 
+async function resolvePluginReference(
+  siteUrl: string,
+  token: string,
+  pluginSlugOrFile: string,
+): Promise<string> {
+  if (
+    pluginSlugOrFile.includes("/") &&
+    pluginSlugOrFile.toLowerCase().endsWith(".php")
+  ) {
+    return pluginSlugOrFile;
+  }
+
+  const bridgePlugins = await bridge.getPlugins(siteUrl, token);
+  const matched = bridgePlugins.find(
+    (plugin) =>
+      plugin.file === pluginSlugOrFile || plugin.slug === pluginSlugOrFile,
+  );
+
+  return matched?.file ?? pluginSlugOrFile;
+}
+
 export async function syncSitePlugins(
   siteId: string,
 ): Promise<ActionResult<SitePlugin[]>> {
@@ -112,7 +133,8 @@ export async function activatePlugin(
   if (!conn) return { success: false, error: "Site not found" };
 
   try {
-    await bridge.managePlugin(conn.url, conn.token, "activate", pluginSlug);
+    const pluginRef = await resolvePluginReference(conn.url, conn.token, pluginSlug);
+    await bridge.managePlugin(conn.url, conn.token, "activate", pluginRef);
     await repo.upsert({
       siteId,
       slug: pluginSlug,
@@ -145,7 +167,8 @@ export async function deactivatePlugin(
   if (!conn) return { success: false, error: "Site not found" };
 
   try {
-    await bridge.managePlugin(conn.url, conn.token, "deactivate", pluginSlug);
+    const pluginRef = await resolvePluginReference(conn.url, conn.token, pluginSlug);
+    await bridge.managePlugin(conn.url, conn.token, "deactivate", pluginRef);
     const bridgePlugins = await bridge.getPlugins(conn.url, conn.token);
     const mapped = bridgePlugins.map((bp) => mapBridgeToPlugin(siteId, bp));
     await repo.syncPlugins(siteId, mapped);
@@ -167,13 +190,37 @@ export async function updatePlugin(
   if (!conn) return { success: false, error: "Site not found" };
 
   try {
-    await bridge.managePlugin(conn.url, conn.token, "update", pluginSlug);
+    const pluginRef = await resolvePluginReference(conn.url, conn.token, pluginSlug);
+    await bridge.managePlugin(conn.url, conn.token, "update", pluginRef);
     const bridgePlugins = await bridge.getPlugins(conn.url, conn.token);
     const mapped = bridgePlugins.map((bp) => mapBridgeToPlugin(siteId, bp));
     await repo.syncPlugins(siteId, mapped);
     return { success: true, data: undefined };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update plugin";
+    return { success: false, error: message };
+  }
+}
+
+export async function deletePlugin(
+  siteId: string,
+  pluginSlug: string,
+): Promise<ActionResult> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { success: false, error: "Not authenticated" };
+
+  const conn = await getSiteConnection(siteId, userId);
+  if (!conn) return { success: false, error: "Site not found" };
+
+  try {
+    const pluginRef = await resolvePluginReference(conn.url, conn.token, pluginSlug);
+    await bridge.managePlugin(conn.url, conn.token, "delete", pluginRef);
+    const bridgePlugins = await bridge.getPlugins(conn.url, conn.token);
+    const mapped = bridgePlugins.map((bp) => mapBridgeToPlugin(siteId, bp));
+    await repo.syncPlugins(siteId, mapped);
+    return { success: true, data: undefined };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete plugin";
     return { success: false, error: message };
   }
 }
@@ -223,7 +270,12 @@ export async function bulkUpdatePlugins(
     }
 
     try {
-      await bridge.managePlugin(conn.url, conn.token, "update", pluginSlug);
+      const pluginRef = await resolvePluginReference(
+        conn.url,
+        conn.token,
+        pluginSlug,
+      );
+      await bridge.managePlugin(conn.url, conn.token, "update", pluginRef);
       const bridgePlugins = await bridge.getPlugins(conn.url, conn.token);
       const mapped = bridgePlugins.map((bp) => mapBridgeToPlugin(siteId, bp));
       await repo.syncPlugins(siteId, mapped);

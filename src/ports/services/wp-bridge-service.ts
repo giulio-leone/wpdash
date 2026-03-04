@@ -22,7 +22,8 @@ export interface WpBridgePluginData {
 export type PluginAction =
   | { type: "activate"; slug: string }
   | { type: "deactivate"; slug: string }
-  | { type: "update"; slug: string };
+  | { type: "update"; slug: string }
+  | { type: "delete"; slug: string };
 
 export interface WpBridgeSecurityFinding {
   filePath: string;

@@ -126,15 +126,16 @@ class WPDash_Plugins {
             return $rate_check;
         }
 
-        $action = $request->get_param('action');
-        $plugin = $request->get_param('plugin');
+        $action       = $request->get_param('action');
+        $plugin_input = (string) $request->get_param('plugin');
 
         if (!function_exists('get_plugins')) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
         $all_plugins = get_plugins();
-        if (!isset($all_plugins[$plugin])) {
+        $plugin      = $this->resolve_plugin_file($plugin_input, $all_plugins);
+        if ($plugin === null) {
             return new WP_Error('not_found', 'Plugin not found', ['status' => 404]);
         }
 
@@ -156,6 +157,10 @@ class WPDash_Plugins {
             case 'delete':
                 if (is_plugin_active($plugin)) {
                     return new WP_Error('active_plugin', 'Deactivate the plugin before deleting', ['status' => 400]);
+                }
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+                if (!function_exists('WP_Filesystem') || !WP_Filesystem()) {
+                    return new WP_Error('filesystem_unavailable', 'Filesystem access not available for plugin deletion', ['status' => 500]);
                 }
                 $deleted = delete_plugins([$plugin]);
                 if (is_wp_error($deleted)) {
@@ -220,6 +225,11 @@ class WPDash_Plugins {
      * @return WP_REST_Response|WP_Error
      */
     private function do_update(string $plugin) {
+        $updates = get_site_transient('update_plugins');
+        if (!is_object($updates) || !isset($updates->response) || !isset($updates->response[$plugin])) {
+            return new WP_REST_Response(['message' => 'Plugin is already up to date', 'plugin' => $plugin], 200);
+        }
+
         require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 
         $upgrader = new Plugin_Upgrader(new Automatic_Upgrader_Skin());
@@ -234,5 +244,38 @@ class WPDash_Plugins {
         }
 
         return new WP_REST_Response(['message' => 'Plugin updated', 'plugin' => $plugin], 200);
+    }
+
+    /**
+     * Resolve plugin identifier from file path or slug.
+     *
+     * @param string $plugin_input
+     * @param array<string, array<string, mixed>> $all_plugins
+     * @return string|null
+     */
+    private function resolve_plugin_file(string $plugin_input, array $all_plugins): ?string {
+        if (isset($all_plugins[$plugin_input])) {
+            return $plugin_input;
+        }
+
+        foreach ($all_plugins as $file => $data) {
+            $slug = dirname($file);
+            if ($slug === '.') {
+                $slug = basename($file, '.php');
+            }
+
+            $base_file_slug = basename($file, '.php');
+            $name_slug      = isset($data['Name']) ? sanitize_title((string) $data['Name']) : '';
+
+            if (
+                $plugin_input === $slug ||
+                $plugin_input === $base_file_slug ||
+                ($name_slug !== '' && $plugin_input === $name_slug)
+            ) {
+                return $file;
+            }
+        }
+
+        return null;
     }
 }

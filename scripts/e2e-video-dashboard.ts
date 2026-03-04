@@ -55,6 +55,33 @@ async function clickTab(page: Page, tabName: string) {
   return false;
 }
 
+async function waitForPluginPresence(
+  page: Page,
+  pluginName: string,
+  present: boolean,
+  timeout = 15000,
+): Promise<boolean> {
+  const end = Date.now() + timeout;
+  while (Date.now() < end) {
+    const count = await page
+      .locator("tbody tr")
+      .filter({ hasText: pluginName })
+      .count();
+    if ((present && count > 0) || (!present && count === 0)) {
+      return true;
+    }
+    await sleep(500);
+  }
+  return false;
+}
+
+async function assertNoPluginNotFound(page: Page) {
+  const body = (await page.textContent("body")) ?? "";
+  if (body.includes("Plugin not found")) {
+    throw new Error("Dashboard shows 'Plugin not found' in Plugins tab");
+  }
+}
+
 async function main() {
   console.log("🎬 WP Dash — Visual E2E Video Recording\n");
 
@@ -134,25 +161,54 @@ async function main() {
     await clickTab(page, "Plugins");
     await waitForText(page, "Akismet", 15000);
     await sleep(4000);
+    await assertNoPluginNotFound(page);
     console.log("   ✅ Plugin list loaded");
 
-    // Plugin management - Activate Hello Dolly
-    console.log("📹 Plugin Management");
-    const activateBtn = page.locator("button").filter({ hasText: "Activate" }).first();
-    if (await activateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await activateBtn.click();
-      await sleep(5000);
-      console.log("   ✅ Plugin activated");
+    // Plugin management - Activate / Deactivate / Update / Delete
+    console.log("📹 Plugin Management — Activate / Deactivate / Update / Delete");
+    const helloRow = () => page.locator("tbody tr").filter({ hasText: "Hello Dolly" }).first();
+    const hasHello = await waitForPluginPresence(page, "Hello Dolly", true, 8000);
 
-      const deactivateBtn = page.locator("button").filter({ hasText: "Deactivate" }).first();
-      if (await deactivateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await deactivateBtn.click();
+    if (!hasHello) {
+      console.log("   ⚠️ Hello Dolly row not found");
+    } else {
+      const activateBtn = helloRow().getByRole("button", { name: "Activate", exact: true });
+      if (await activateBtn.count() > 0) {
+        await activateBtn.first().click();
         await sleep(4000);
+        await assertNoPluginNotFound(page);
+        console.log("   ✅ Plugin activated");
+      }
+
+      const deactivateBtn = helloRow().getByRole("button", { name: "Deactivate", exact: true });
+      if (await deactivateBtn.count() > 0) {
+        await deactivateBtn.first().click();
+        await sleep(3500);
+        await assertNoPluginNotFound(page);
         console.log("   ✅ Plugin deactivated");
       }
-    } else {
-      await sleep(2000);
-      console.log("   ⚠️ Activate button not visible");
+
+      const updateBtn = helloRow().getByRole("button", { name: "Update", exact: true });
+      if (await updateBtn.count() > 0) {
+        await updateBtn.first().click();
+        await sleep(3500);
+        await assertNoPluginNotFound(page);
+        console.log("   ✅ Plugin update action executed");
+      }
+
+      const deleteBtn = helloRow().getByRole("button", { name: "Delete", exact: true });
+      if (await deleteBtn.count() > 0) {
+        page.once("dialog", (dialog) => dialog.accept());
+        await deleteBtn.first().click();
+        const deleted = await waitForPluginPresence(page, "Hello Dolly", false, 12000);
+        await sleep(1500);
+        await assertNoPluginNotFound(page);
+        if (deleted) {
+          console.log("   ✅ Plugin deleted");
+        } else {
+          console.log("   ⚠️ Delete action did not remove plugin row");
+        }
+      }
     }
 
     // ── Security Tab ─────────────────────────────────────────
@@ -225,6 +281,14 @@ async function main() {
     // Cleanup temp video
     try { fs.unlinkSync(videoPath); } catch {}
   }
+
+  try {
+    const { execSync } = await import("child_process");
+    execSync(
+      "docker exec wpdash-test-wp sh -lc 'if [ ! -f /var/www/html/wp-content/plugins/hello.php ] && [ -f /usr/src/wordpress/wp-content/plugins/hello.php ]; then cp /usr/src/wordpress/wp-content/plugins/hello.php /var/www/html/wp-content/plugins/hello.php; fi'",
+      { stdio: "ignore" },
+    );
+  } catch {}
 
   console.log("\n🎬 Done!");
 }

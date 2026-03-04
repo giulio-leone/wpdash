@@ -10,6 +10,7 @@ import {
   activatePlugin,
   deactivatePlugin,
   updatePlugin,
+  deletePlugin,
 } from "@/application/plugin/plugin-actions";
 import PluginInstallModal from "./PluginInstallModal";
 import BulkUpdatePanel from "./BulkUpdatePanel";
@@ -54,7 +55,7 @@ export default function PluginsList({ siteId }: Props) {
   };
 
   const handleAction = async (
-    action: "activate" | "deactivate" | "update",
+    action: "activate" | "deactivate" | "update" | "delete",
     slug: string,
   ) => {
     setActionLoading(slug);
@@ -62,7 +63,8 @@ export default function PluginsList({ siteId }: Props) {
     let result;
     if (action === "activate") result = await activatePlugin(siteId, slug);
     else if (action === "deactivate") result = await deactivatePlugin(siteId, slug);
-    else result = await updatePlugin(siteId, slug);
+    else if (action === "update") result = await updatePlugin(siteId, slug);
+    else result = await deletePlugin(siteId, slug);
 
     if (!result.success) setError(result.error);
     else await fetchPlugins();
@@ -183,16 +185,36 @@ export default function PluginsList({ siteId }: Props) {
                           Activate
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        disabled={actionLoading === plugin.slug}
+                        onClick={() => handleAction("update", plugin.slug)}
+                      >
+                        Update
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={
+                          actionLoading === plugin.slug ||
+                          plugin.isActive ||
+                          plugin.slug === "wp-dash-bridge"
+                        }
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Delete plugin "${plugin.name}"? This action cannot be undone.`,
+                            )
+                          ) {
+                            void handleAction("delete", plugin.slug);
+                          }
+                        }}
+                      >
+                        Delete
+                      </Button>
                       {plugin.hasUpdate && (
                         <>
-                          <Button
-                            size="sm"
-                            variant="primary"
-                            disabled={actionLoading === plugin.slug}
-                            onClick={() => handleAction("update", plugin.slug)}
-                          >
-                            Update
-                          </Button>
                           <Button
                             size="sm"
                             variant="outline"

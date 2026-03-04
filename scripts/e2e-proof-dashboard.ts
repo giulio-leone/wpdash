@@ -346,7 +346,7 @@ async function main() {
       const manageRes = await fetch(`${WP_URL}/?rest_route=/wpdash/v1/plugins/manage`, {
         method: "POST",
         headers: { Authorization: `Bearer ${wpToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "activate", slug: "hello" }),
+        body: JSON.stringify({ action: "activate", plugin: "hello.php" }),
       });
       const manageData = (await manageRes.json()) as any;
       info("API Activate", manageData.message || JSON.stringify(manageData));
@@ -355,7 +355,7 @@ async function main() {
       await fetch(`${WP_URL}/?rest_route=/wpdash/v1/plugins/manage`, {
         method: "POST",
         headers: { Authorization: `Bearer ${wpToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deactivate", slug: "hello" }),
+        body: JSON.stringify({ action: "deactivate", plugin: "hello.php" }),
       });
       pass("Plugin management verified via bridge API");
     }
