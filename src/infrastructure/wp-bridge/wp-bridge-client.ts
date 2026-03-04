@@ -213,13 +213,20 @@ export class WPBridgeClient {
 
         clearTimeout(timeout);
 
-        if (!response.ok) {
-          const body = (await response
-            .json()
-            .catch(() => null)) as BridgeErrorResponse | null;
+        // Check if response is JSON — WordPress without pretty permalinks
+        // returns 200 with HTML for /wp-json/* paths instead of 404
+        const contentType = response.headers.get("content-type") ?? "";
+        const isJson = contentType.includes("application/json");
 
-          // On 404, try fallback URL format (?rest_route=) if available
-          if (response.status === 404 && fallbackUrl && attempt === 0) {
+        if (!response.ok) {
+          const body = isJson
+            ? ((await response
+                .json()
+                .catch(() => null)) as BridgeErrorResponse | null)
+            : null;
+
+          // On 404 or non-JSON 200, try fallback URL format (?rest_route=)
+          if ((response.status === 404 || !isJson) && fallbackUrl && attempt === 0) {
             return this.request<T>(fallbackUrl, token, init);
           }
 
@@ -245,6 +252,11 @@ export class WPBridgeClient {
           }
 
           throw error;
+        }
+
+        // Response is ok but not JSON — fallback to ?rest_route= format
+        if (!isJson && fallbackUrl && attempt === 0) {
+          return this.request<T>(fallbackUrl, token, init);
         }
 
         return (await response.json()) as T;
