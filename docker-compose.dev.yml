@@ -1,0 +1,12 @@
+services:
+  wpdash-dev:
+    image: node:22-alpine
+    working_dir: /app
+    command: npm run dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
