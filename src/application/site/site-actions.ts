@@ -5,6 +5,10 @@ import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/si
 import { generateSiteToken, hashToken } from "./token-service";
 import { createSiteSchema, updateSiteSchema } from "./validation";
 import type { Site } from "@/domain/site/entity";
+import { db } from "@/infrastructure/database/drizzle-client";
+import { sites as sitesSchema } from "@/infrastructure/database/schemas/sites";
+import { eq } from "drizzle-orm";
+import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
 
 type ActionResult<T = void> =
   | { success: true; data: T }
@@ -126,4 +130,51 @@ export async function getSiteById(id: string): Promise<ActionResult<Site>> {
   }
 
   return { success: true, data: site };
+}
+
+/**
+ * Fetch health data from WP Bridge and update the site record
+ * (wpVersion, phpVersion, status).
+ */
+export async function fetchSiteHealth(
+  siteId: string,
+): Promise<ActionResult<{ wpVersion: string; phpVersion: string }>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { success: false, error: "Not authenticated" };
+
+  const site = await repo.findById(siteId);
+  if (!site || site.userId !== userId)
+    return { success: false, error: "Site not found" };
+
+  // Get token from DB
+  const rows = await db
+    .select({ tokenHash: sitesSchema.tokenHash })
+    .from(sitesSchema)
+    .where(eq(sitesSchema.id, siteId));
+  const token = rows[0]?.tokenHash;
+  if (!token) return { success: false, error: "No bridge token configured" };
+
+  try {
+    const bridge = new WPBridgeClient();
+    const health = await bridge.getHealth(site.url, token);
+
+    await repo.update(siteId, {
+      wpVersion: health.wp_version,
+      phpVersion: health.php_version,
+      status: "online",
+    });
+
+    return {
+      success: true,
+      data: {
+        wpVersion: health.wp_version,
+        phpVersion: health.php_version,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Health check failed",
+    };
+  }
 }

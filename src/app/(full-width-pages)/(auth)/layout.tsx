@@ -2,7 +2,6 @@ import GridShape from "@/components/common/GridShape";
 import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
 
 import { ThemeProvider } from "@/context/ThemeContext";
-import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
@@ -18,10 +17,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               <GridShape />
               <div className="flex max-w-xs flex-col items-center">
                 <Link href="/" className="mb-4 block">
-                  <Image width={231} height={48} src="./images/logo/auth-logo.svg" alt="Logo" />
+                  <span className="text-3xl font-bold text-white">
+                    {process.env.NEXT_PUBLIC_APP_NAME || "WPDash"}
+                  </span>
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
-                  Free and Open-Source Tailwind CSS Admin Dashboard Template
+                  Centralized WordPress monitoring &amp; maintenance dashboard
                 </p>
               </div>
             </div>

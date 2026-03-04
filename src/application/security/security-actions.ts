@@ -11,6 +11,9 @@ import type {
 } from "@/domain/security/entity";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
 import type { BridgeSecurityFinding } from "@/infrastructure/wp-bridge/types";
+import { db } from "@/infrastructure/database/drizzle-client";
+import { sites as sitesSchema } from "@/infrastructure/database/schemas/sites";
+import { eq } from "drizzle-orm";
 
 type ActionResult<T = void> =
   | { success: true; data: T }
@@ -55,7 +58,7 @@ function deriveStatus(findings: SecurityFinding[]): SecurityAuditStatus {
 
 export async function runSecurityAudit(
   siteId: string,
-  bridgeToken: string,
+  bridgeToken?: string,
 ): Promise<ActionResult<SecurityAudit>> {
   const userId = await getCurrentUserId();
   if (!userId) return { success: false, error: "Not authenticated" };
@@ -63,10 +66,21 @@ export async function runSecurityAudit(
   const site = await verifySiteOwnership(siteId, userId);
   if (!site) return { success: false, error: "Site not found" };
 
+  // Get token from DB if not provided
+  let token = bridgeToken;
+  if (!token) {
+    const rows = await db
+      .select({ tokenHash: sitesSchema.tokenHash })
+      .from(sitesSchema)
+      .where(eq(sitesSchema.id, siteId));
+    token = rows[0]?.tokenHash;
+  }
+  if (!token) return { success: false, error: "No bridge token configured" };
+
   try {
     const response = await bridgeClient.getSecurityAudit(
       site.url,
-      bridgeToken,
+      token,
     );
 
     const findings: SecurityFinding[] = response.findings.map((f) => ({
@@ -120,6 +134,13 @@ export async function getLatestSecurityStatus(
   const site = await verifySiteOwnership(siteId, userId);
   if (!site) return { success: false, error: "Site not found" };
 
-  const audit = await securityRepo.getLatestBySiteId(siteId);
+  let audit = await securityRepo.getLatestBySiteId(siteId);
+
+  // Auto-run security audit when no cached data
+  if (!audit) {
+    const result = await runSecurityAudit(siteId);
+    if (result.success) audit = result.data;
+  }
+
   return { success: true, data: audit };
 }

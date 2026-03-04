@@ -85,7 +85,19 @@ export async function getSitePlugins(
   const conn = await getSiteConnection(siteId, userId);
   if (!conn) return { success: false, error: "Site not found" };
 
-  const plugins = await repo.findBySiteId(siteId);
+  let plugins = await repo.findBySiteId(siteId);
+
+  // Auto-sync from WP Bridge when local cache is empty
+  if (plugins.length === 0) {
+    try {
+      const bridgePlugins = await bridge.getPlugins(conn.url, conn.token);
+      const mapped = bridgePlugins.map((bp) => mapBridgeToPlugin(siteId, bp));
+      plugins = await repo.syncPlugins(siteId, mapped);
+    } catch {
+      // Return empty array if bridge is unreachable
+    }
+  }
+
   return { success: true, data: plugins };
 }
 

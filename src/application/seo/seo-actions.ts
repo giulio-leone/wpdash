@@ -141,6 +141,13 @@ export async function getLatestSeoStatus(
   const conn = await getSiteConnection(siteId, userId);
   if (!conn) return { success: false, error: "Site not found" };
 
-  const audit = await repo.getLatestBySiteId(siteId);
+  let audit = await repo.getLatestBySiteId(siteId);
+
+  // Auto-run SEO audit when no cached data
+  if (!audit) {
+    const result = await runSeoAudit(siteId);
+    if (result.success) audit = result.data;
+  }
+
   return { success: true, data: audit };
 }

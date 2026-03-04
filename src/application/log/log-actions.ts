@@ -6,6 +6,9 @@ import { DrizzleLogRepository } from "@/infrastructure/database/repositories/log
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
 import type { LogLevel } from "@/domain/log/entity";
 import type { BridgeLogLevel } from "@/infrastructure/wp-bridge/types";
+import { db } from "@/infrastructure/database/drizzle-client";
+import { sites } from "@/infrastructure/database/schemas/sites";
+import { eq } from "drizzle-orm";
 import type { FindSiteLogOptions, SeverityCount } from "@/ports/repositories/site-log-repository";
 import type { SiteLog } from "@/domain/log/entity";
 
@@ -33,18 +36,31 @@ async function getSiteForUser(siteId: string) {
   return site;
 }
 
+async function getSiteWithToken(siteId: string) {
+  const userId = await getCurrentUserId();
+  if (!userId) return null;
+  const site = await siteRepo.findById(siteId);
+  if (!site || site.userId !== userId) return null;
+  const rows = await db
+    .select({ tokenHash: sites.tokenHash })
+    .from(sites)
+    .where(eq(sites.id, siteId));
+  if (!rows[0]?.tokenHash) return null;
+  return { ...site, token: rows[0].tokenHash };
+}
+
 /** Fetch logs from the WP Bridge and store them in the database. */
 export async function fetchSiteLogs(
   siteId: string,
   options?: { lines?: number; level?: BridgeLogLevel | "all" },
 ): Promise<ActionResult<SiteLog[]>> {
-  const site = await getSiteForUser(siteId);
+  const site = await getSiteWithToken(siteId);
   if (!site) return { success: false, error: "Site not found" };
 
   try {
     const response = await bridge.getLogs(
       site.url,
-      site.id, // token placeholder — bridge uses site URL + token
+      site.token,
       options?.lines,
       options?.level,
     );
@@ -75,7 +91,16 @@ export async function getSiteLogs(
   const site = await getSiteForUser(siteId);
   if (!site) return { success: false, error: "Site not found" };
 
-  const logs = await logRepo.findBySiteId(siteId, filters);
+  let logs = await logRepo.findBySiteId(siteId, filters);
+
+  // Auto-fetch from WP Bridge when no cached logs
+  if (logs.length === 0) {
+    const result = await fetchSiteLogs(siteId);
+    if (result.success) {
+      logs = await logRepo.findBySiteId(siteId, filters);
+    }
+  }
+
   return { success: true, data: logs };
 }
 
@@ -86,6 +111,14 @@ export async function getLogSummary(
   const site = await getSiteForUser(siteId);
   if (!site) return { success: false, error: "Site not found" };
 
-  const counts = await logRepo.countBySeverity(siteId);
+  let counts = await logRepo.countBySeverity(siteId);
+
+  // Auto-fetch logs from bridge if nothing cached
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (total === 0) {
+    await fetchSiteLogs(siteId);
+    counts = await logRepo.countBySeverity(siteId);
+  }
+
   return { success: true, data: counts };
 }

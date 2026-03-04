@@ -168,13 +168,27 @@ export class WPBridgeClient {
 
   private buildUrl(siteUrl: string, path: string): string {
     const base = siteUrl.replace(/\/+$/, "");
+    // Support both /wp-json/ (pretty permalinks) and ?rest_route= (plain permalinks)
     return `${base}/wp-json/wpdash/v1${path}`;
+  }
+
+  private buildFallbackUrl(siteUrl: string, path: string): string {
+    const base = siteUrl.replace(/\/+$/, "");
+    const restPath = `/wpdash/v1${path}`;
+    // Split path and query string if any
+    const parts = restPath.split("?");
+    const basePath = parts[0] ?? restPath;
+    const queryString = parts[1] ?? "";
+    const params = new URLSearchParams(queryString);
+    params.set("rest_route", basePath);
+    return `${base}/?${params.toString()}`;
   }
 
   private async request<T>(
     url: string,
     token: string,
     init: RequestInit,
+    fallbackUrl?: string,
   ): Promise<T> {
     let lastError: Error | undefined;
 
@@ -203,6 +217,11 @@ export class WPBridgeClient {
           const body = (await response
             .json()
             .catch(() => null)) as BridgeErrorResponse | null;
+
+          // On 404, try fallback URL format (?rest_route=) if available
+          if (response.status === 404 && fallbackUrl && attempt === 0) {
+            return this.request<T>(fallbackUrl, token, init);
+          }
 
           const error = new WPBridgeError(
             body?.message ?? `HTTP ${response.status}`,
@@ -254,9 +273,12 @@ export class WPBridgeClient {
     token: string,
     path: string,
   ): Promise<T> {
-    return this.request<T>(this.buildUrl(siteUrl, path), token, {
-      method: "GET",
-    });
+    return this.request<T>(
+      this.buildUrl(siteUrl, path),
+      token,
+      { method: "GET" },
+      this.buildFallbackUrl(siteUrl, path),
+    );
   }
 
   private async post<T>(
@@ -265,10 +287,12 @@ export class WPBridgeClient {
     path: string,
     body: unknown,
   ): Promise<T> {
-    return this.request<T>(this.buildUrl(siteUrl, path), token, {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
+    return this.request<T>(
+      this.buildUrl(siteUrl, path),
+      token,
+      { method: "POST", body: JSON.stringify(body) },
+      this.buildFallbackUrl(siteUrl, path),
+    );
   }
 
   private sleep(ms: number): Promise<void> {

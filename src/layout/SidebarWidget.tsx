@@ -1,24 +1,17 @@
 import React from "react";
 
 export default function SidebarWidget() {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "WPDash";
   return (
     <div
       className={`mx-auto mb-10 w-full max-w-60 rounded-2xl bg-gray-50 px-4 py-5 text-center dark:bg-white/[0.03]`}
     >
       <h3 className="mb-2 font-semibold text-gray-900 dark:text-white">
-        #1 Tailwind CSS Dashboard
+        {appName}
       </h3>
       <p className="text-theme-sm mb-4 text-gray-500 dark:text-gray-400">
-        Leading Tailwind CSS Admin Template with 400+ UI Component and Pages.
+        Centralized WordPress monitoring &amp; maintenance dashboard.
       </p>
-      <a
-        href="https://tailadmin.com/pricing"
-        target="_blank"
-        rel="nofollow"
-        className="bg-brand-500 text-theme-sm hover:bg-brand-600 flex items-center justify-center rounded-lg p-3 font-medium text-white"
-      >
-        Upgrade To Pro
-      </a>
     </div>
   );
 }

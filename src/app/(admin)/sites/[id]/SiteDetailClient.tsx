@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import type { Site } from "@/domain/site/entity";
-import { regenerateToken } from "@/application/site/site-actions";
+import { regenerateToken, fetchSiteHealth } from "@/application/site/site-actions";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import LogSummary from "@/components/logs/LogSummary";
@@ -28,6 +28,31 @@ function statusBadgeColor(status: string): "success" | "error" | "light" {
 
 export default function SiteDetailClient({ site }: { site: Site }) {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Overview");
+  const [healthData, setHealthData] = useState<{
+    wpVersion: string | null;
+    phpVersion: string | null;
+  }>({ wpVersion: site.wpVersion, phpVersion: site.phpVersion });
+  const [healthLoading, setHealthLoading] = useState(false);
+
+  const loadHealth = useCallback(async () => {
+    if (healthData.wpVersion && healthData.phpVersion) return;
+    setHealthLoading(true);
+    try {
+      const result = await fetchSiteHealth(site.id);
+      if (result.success) {
+        setHealthData({
+          wpVersion: result.data.wpVersion,
+          phpVersion: result.data.phpVersion,
+        });
+      }
+    } finally {
+      setHealthLoading(false);
+    }
+  }, [site.id, healthData.wpVersion, healthData.phpVersion]);
+
+  useEffect(() => {
+    loadHealth();
+  }, [loadHealth]);
   const [regenToken, setRegenToken] = useState<string | null>(null);
   const [seoRefreshKey, setSeoRefreshKey] = useState(0);
 
@@ -86,8 +111,14 @@ export default function SiteDetailClient({ site }: { site: Site }) {
 
       {/* Info cards */}
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <InfoCard label="WP Version" value={site.wpVersion ?? "—"} />
-        <InfoCard label="PHP Version" value={site.phpVersion ?? "—"} />
+        <InfoCard
+          label="WP Version"
+          value={healthLoading ? "Loading…" : (healthData.wpVersion ?? "—")}
+        />
+        <InfoCard
+          label="PHP Version"
+          value={healthLoading ? "Loading…" : (healthData.phpVersion ?? "—")}
+        />
         <InfoCard
           label="Last Checked"
           value={site.lastCheckedAt ? new Date(site.lastCheckedAt).toLocaleString() : "Never"}
@@ -118,8 +149,28 @@ export default function SiteDetailClient({ site }: { site: Site }) {
       {/* Tab content */}
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         {activeTab === "Overview" ? (
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            <p>Site overview information will appear here once your WordPress plugin starts reporting data.</p>
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Site Health</h3>
+            {healthLoading ? (
+              <p className="text-sm text-gray-500">Fetching health data from WordPress…</p>
+            ) : healthData.wpVersion ? (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <InfoCard label="WordPress" value={healthData.wpVersion} />
+                <InfoCard label="PHP" value={healthData.phpVersion ?? "—"} />
+                <InfoCard label="Status" value={site.status ?? "unknown"} />
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Could not reach the WordPress site. Ensure the WP Bridge plugin is installed and the token is configured.
+              </p>
+            )}
+            <button
+              onClick={loadHealth}
+              disabled={healthLoading}
+              className="mt-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+            >
+              {healthLoading ? "Checking…" : "Refresh Health"}
+            </button>
           </div>
         ) : activeTab === "Uptime" ? (
           <div className="space-y-6">
