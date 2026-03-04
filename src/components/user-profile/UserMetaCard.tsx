@@ -10,9 +10,6 @@ import Image from "next/image";
 export default function UserMetaCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const handleSave = () => {
-    // Handle save logic here
-    // eslint-disable-next-line no-console
-    console.log("Saving changes...");
     closeModal();
   };
   return (

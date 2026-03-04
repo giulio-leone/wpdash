@@ -9,9 +9,6 @@ import Label from "../form/Label";
 export default function UserAddressCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const handleSave = () => {
-    // Handle save logic here
-    // eslint-disable-next-line no-console
-    console.log("Saving changes...");
     closeModal();
   };
   return (

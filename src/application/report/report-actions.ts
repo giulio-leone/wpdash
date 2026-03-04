@@ -9,6 +9,7 @@ import { DrizzleSeoRepository } from "@/infrastructure/database/repositories/seo
 import { DrizzleBackupRepository } from "@/infrastructure/database/repositories/backup-repository-impl";
 import { DrizzleLogRepository } from "@/infrastructure/database/repositories/log-repository-impl";
 import { generateCSV } from "@/lib/csv";
+import { UPTIME_RETENTION_DAYS } from "@/lib/constants";
 import type { Site } from "@/domain/site/entity";
 
 type ActionResult<T = void> =
@@ -66,7 +67,7 @@ export interface SiteReport {
 }
 
 async function buildSiteReport(site: Site): Promise<SiteReport> {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(Date.now() - UPTIME_RETENTION_DAYS * 24 * 60 * 60 * 1000);
 
   const [uptimeChecks, securityAudit, plugins, seoAudit, severityCounts, backupRecord, latestCheck] =
     await Promise.all([

@@ -11,24 +11,29 @@ import type {
   BridgeSecurityResponse,
   BridgeSeoAuditResponse,
 } from "./types";
+import {
+  WP_BRIDGE_TIMEOUT_MS,
+  WP_BRIDGE_MAX_RETRIES,
+  WP_BRIDGE_RETRY_DELAY_MS,
+} from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
 interface WPBridgeClientOptions {
-  /** Request timeout in milliseconds (default: 15 000). */
+  /** Request timeout in milliseconds. */
   timeoutMs?: number;
-  /** Maximum retry attempts on transient failures (default: 2). */
+  /** Maximum retry attempts on transient failures. */
   maxRetries?: number;
-  /** Base delay between retries in milliseconds (default: 1 000). */
+  /** Base delay between retries in milliseconds. */
   retryDelayMs?: number;
 }
 
 const DEFAULT_OPTIONS: Required<WPBridgeClientOptions> = {
-  timeoutMs: 15_000,
-  maxRetries: 2,
-  retryDelayMs: 1_000,
+  timeoutMs: WP_BRIDGE_TIMEOUT_MS,
+  maxRetries: WP_BRIDGE_MAX_RETRIES,
+  retryDelayMs: WP_BRIDGE_RETRY_DELAY_MS,
 };
 
 // ---------------------------------------------------------------------------

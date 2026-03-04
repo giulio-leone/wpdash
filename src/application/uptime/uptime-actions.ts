@@ -3,6 +3,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleUptimeRepository } from "@/infrastructure/database/repositories/uptime-repository-impl";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
+import { UPTIME_CHECK_TIMEOUT_MS, UPTIME_RETENTION_DAYS } from "@/lib/constants";
 import type { UptimeCheck } from "@/domain/uptime/entity";
 
 type ActionResult<T = void> =
@@ -42,7 +43,7 @@ export async function checkSiteUptime(
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15_000);
+    const timeout = setTimeout(() => controller.abort(), UPTIME_CHECK_TIMEOUT_MS);
 
     const response = await fetch(site.url, {
       method: "HEAD",
@@ -74,7 +75,7 @@ export async function checkSiteUptime(
 
 export async function getSiteUptimeHistory(
   siteId: string,
-  days = 7,
+  days = UPTIME_RETENTION_DAYS,
 ): Promise<ActionResult<UptimeCheck[]>> {
   const userId = await getCurrentUserId();
   if (!userId) return { success: false, error: "Not authenticated" };
@@ -104,7 +105,7 @@ export async function getSiteUptimeStatus(
   if (!site) return { success: false, error: "Site not found" };
 
   const since = new Date();
-  since.setDate(since.getDate() - 7);
+  since.setDate(since.getDate() - UPTIME_RETENTION_DAYS);
 
   const [latest, uptimePercentage] = await Promise.all([
     uptimeRepo.getLatestBySiteId(siteId),

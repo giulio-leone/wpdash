@@ -3,9 +3,10 @@
 import React, { useCallback, useEffect, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { getSiteLogs, fetchSiteLogs } from "@/application/log/log-actions";
+import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
 import type { SiteLog, LogLevel } from "@/domain/log/entity";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const levelColors: Record<string, string> = {
   error: "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500",

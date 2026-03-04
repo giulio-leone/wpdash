@@ -4,6 +4,12 @@ import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/cn";
 import Badge from "@/components/ui/badge/Badge";
 import { getLatestSeoStatus, getSeoAuditHistory } from "@/application/seo/seo-actions";
+import {
+  SEO_TITLE_MIN_LENGTH,
+  SEO_TITLE_MAX_LENGTH,
+  SEO_META_DESC_MIN_LENGTH,
+  SEO_META_DESC_MAX_LENGTH,
+} from "@/lib/constants";
 import type { SeoAudit } from "@/domain/seo/entity";
 
 interface Props {
@@ -23,10 +29,10 @@ function buildRecommendations(audit: SeoAudit): Recommendation[] {
   // Title
   if (!audit.title) {
     recs.push({ label: "Title", severity: "error", message: "Missing page title. Add a <title> tag." });
-  } else if (audit.title.length < 30) {
-    recs.push({ label: "Title", severity: "warning", message: `Title is too short (${audit.title.length} chars). Aim for 30–60 characters.` });
-  } else if (audit.title.length > 60) {
-    recs.push({ label: "Title", severity: "warning", message: `Title is too long (${audit.title.length} chars). Keep under 60 characters.` });
+  } else if (audit.title.length < SEO_TITLE_MIN_LENGTH) {
+    recs.push({ label: "Title", severity: "warning", message: `Title is too short (${audit.title.length} chars). Aim for ${SEO_TITLE_MIN_LENGTH}–${SEO_TITLE_MAX_LENGTH} characters.` });
+  } else if (audit.title.length > SEO_TITLE_MAX_LENGTH) {
+    recs.push({ label: "Title", severity: "warning", message: `Title is too long (${audit.title.length} chars). Keep under ${SEO_TITLE_MAX_LENGTH} characters.` });
   } else {
     recs.push({ label: "Title", severity: "success", message: `Good title length (${audit.title.length} chars).` });
   }
@@ -34,10 +40,10 @@ function buildRecommendations(audit: SeoAudit): Recommendation[] {
   // Meta description
   if (!audit.metaDescription) {
     recs.push({ label: "Meta Description", severity: "error", message: "Missing meta description. Add a <meta name=\"description\"> tag." });
-  } else if (audit.metaDescription.length < 120) {
-    recs.push({ label: "Meta Description", severity: "warning", message: `Description is too short (${audit.metaDescription.length} chars). Aim for 120–160 characters.` });
-  } else if (audit.metaDescription.length > 160) {
-    recs.push({ label: "Meta Description", severity: "warning", message: `Description is too long (${audit.metaDescription.length} chars). Keep under 160 characters.` });
+  } else if (audit.metaDescription.length < SEO_META_DESC_MIN_LENGTH) {
+    recs.push({ label: "Meta Description", severity: "warning", message: `Description is too short (${audit.metaDescription.length} chars). Aim for ${SEO_META_DESC_MIN_LENGTH}–${SEO_META_DESC_MAX_LENGTH} characters.` });
+  } else if (audit.metaDescription.length > SEO_META_DESC_MAX_LENGTH) {
+    recs.push({ label: "Meta Description", severity: "warning", message: `Description is too long (${audit.metaDescription.length} chars). Keep under ${SEO_META_DESC_MAX_LENGTH} characters.` });
   } else {
     recs.push({ label: "Meta Description", severity: "success", message: `Good description length (${audit.metaDescription.length} chars).` });
   }
@@ -100,9 +106,9 @@ export default function SeoDetails({ siteId, refreshKey }: Props) {
             <p className="text-sm text-gray-900 dark:text-white">{audit.title}</p>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Length: {audit.title.length} characters
-              {audit.title.length >= 30 && audit.title.length <= 60
+              {audit.title.length >= SEO_TITLE_MIN_LENGTH && audit.title.length <= SEO_TITLE_MAX_LENGTH
                 ? " ✓ Good"
-                : " — Recommended: 30–60 characters"}
+                : ` — Recommended: ${SEO_TITLE_MIN_LENGTH}–${SEO_TITLE_MAX_LENGTH} characters`}
             </p>
           </>
         ) : (
@@ -117,9 +123,9 @@ export default function SeoDetails({ siteId, refreshKey }: Props) {
             <p className="text-sm text-gray-900 dark:text-white">{audit.metaDescription}</p>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Length: {audit.metaDescription.length} characters
-              {audit.metaDescription.length >= 120 && audit.metaDescription.length <= 160
+              {audit.metaDescription.length >= SEO_META_DESC_MIN_LENGTH && audit.metaDescription.length <= SEO_META_DESC_MAX_LENGTH
                 ? " ✓ Good"
-                : " — Recommended: 120–160 characters"}
+                : ` — Recommended: ${SEO_META_DESC_MIN_LENGTH}–${SEO_META_DESC_MAX_LENGTH} characters`}
             </p>
           </>
         ) : (

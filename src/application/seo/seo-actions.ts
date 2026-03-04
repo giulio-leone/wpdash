@@ -6,6 +6,12 @@ import { DrizzleSeoRepository } from "@/infrastructure/database/repositories/seo
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
 import { db } from "@/infrastructure/database/drizzle-client";
 import { sites } from "@/infrastructure/database/schemas/sites";
+import {
+  SEO_TITLE_MIN_LENGTH,
+  SEO_TITLE_MAX_LENGTH,
+  SEO_META_DESC_MIN_LENGTH,
+  SEO_META_DESC_MAX_LENGTH,
+} from "@/lib/constants";
 import type { SeoAudit } from "@/domain/seo/entity";
 import type { BridgeSeoAuditResponse } from "@/infrastructure/wp-bridge/types";
 
@@ -41,7 +47,7 @@ function calculateSeoScore(audit: BridgeSeoAuditResponse): number {
   if (audit.title) {
     score += 15;
     const len = audit.title.length;
-    if (len >= 30 && len <= 60) score += 10;
+    if (len >= SEO_TITLE_MIN_LENGTH && len <= SEO_TITLE_MAX_LENGTH) score += 10;
     else if (len > 0) score += 5;
   }
 
@@ -49,7 +55,7 @@ function calculateSeoScore(audit: BridgeSeoAuditResponse): number {
   if (audit.meta_description) {
     score += 15;
     const len = audit.meta_description.length;
-    if (len >= 120 && len <= 160) score += 10;
+    if (len >= SEO_META_DESC_MIN_LENGTH && len <= SEO_META_DESC_MAX_LENGTH) score += 10;
     else if (len > 0) score += 5;
   }
 

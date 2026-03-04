@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import { DrizzleBackupRepository } from "@/infrastructure/database/repositories/backup-repository-impl";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
+import { BACKUP_STALE_THRESHOLD_DAYS } from "@/lib/constants";
 import type { BackupRecord, BackupStatus } from "@/domain/backup/entity";
 
 type ActionResult<T = void> =
@@ -34,7 +35,7 @@ function computeStatus(lastBackupAt: string | null): BackupStatus {
   if (!lastBackupAt) return "unknown";
   const age = Date.now() - new Date(lastBackupAt).getTime();
   const days = age / (1000 * 60 * 60 * 24);
-  return days <= 7 ? "recent" : "stale";
+  return days <= BACKUP_STALE_THRESHOLD_DAYS ? "recent" : "stale";
 }
 
 /** Fetch backup status from WP Bridge and store it. */
@@ -76,7 +77,7 @@ export async function getBackupStatus(
 /** Check if backup is stale (older than threshold days). */
 export async function checkBackupFreshness(
   siteId: string,
-  thresholdDays = 7,
+  thresholdDays = BACKUP_STALE_THRESHOLD_DAYS,
 ): Promise<ActionResult<{ isStale: boolean; daysSinceBackup: number | null }>> {
   const site = await getSiteForUser(siteId);
   if (!site) return { success: false, error: "Site not found" };
