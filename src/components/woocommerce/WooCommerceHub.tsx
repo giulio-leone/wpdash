@@ -229,8 +229,15 @@ export default function WooCommerceHub({ siteId }: Props) {
             </div>
           )}
           {ordersLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+            <div className="space-y-2 py-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-4 border-b border-gray-100 dark:border-gray-800 py-2">
+                  <div className="h-4 w-16 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                  <div className="h-4 w-28 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                  <div className="h-4 w-20 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                  <div className="h-4 flex-1 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                </div>
+              ))}
             </div>
           ) : orders.length === 0 ? (
             <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -312,8 +319,15 @@ export default function WooCommerceHub({ siteId }: Props) {
             </div>
           )}
           {productsLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+            <div className="space-y-2 py-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-4 border-b border-gray-100 dark:border-gray-800 py-2">
+                  <div className="h-4 w-32 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                  <div className="h-4 w-16 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                  <div className="h-4 w-20 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                  <div className="h-4 flex-1 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                </div>
+              ))}
             </div>
           ) : products.length === 0 ? (
             <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
