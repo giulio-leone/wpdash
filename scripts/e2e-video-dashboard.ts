@@ -613,14 +613,19 @@ async function main() {
       console.log("\n  🔧 [9e] Deleting Contact Form 7…");
       const cf7Row3 = page.locator("tbody tr").filter({ hasText: "Contact Form 7" }).first();
       await cf7Row3.scrollIntoViewIfNeeded();
-      await sleep(600);
+      await sleep(800);
       const deleteBtn = cf7Row3.getByRole("button", { name: "Delete", exact: true });
       if (await deleteBtn.count() > 0) {
         await deleteBtn.hover();
-        await sleep(600);
-        page.once("dialog", (dialog) => void dialog.accept());
+        await sleep(1000);  // viewer sees Delete button highlighted
+        // Register async dialog handler with a pause so viewer reads the confirmation
+        page.once("dialog", async (dialog) => {
+          await sleep(1500);  // viewer reads the confirmation dialog text
+          await dialog.accept();
+        });
         await deleteBtn.click();
-        // Wait for row to be removed from DOM
+        // click() returns after dialog is accepted; now wait for row to disappear
+        await sleep(500);
         await cf7Row3.waitFor({ state: "hidden", timeout: 15000 });
         await sleep(4500);   // viewer sees plugin is gone from list
         console.log("  ✅ Contact Form 7 deleted");
