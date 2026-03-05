@@ -177,3 +177,218 @@ export interface BridgeErrorResponse {
   message: string;
   data?: { status: number; retry_after?: number };
 }
+
+// ---------------------------------------------------------------------------
+// Themes
+// ---------------------------------------------------------------------------
+
+export interface BridgeThemeInfo {
+  slug: string;
+  name: string;
+  version: string;
+  author: string;
+  description: string;
+  is_active: boolean;
+  has_update: boolean;
+  update_version: string | null;
+  screenshot_url: string | null;
+  tags: string[];
+}
+
+export type BridgeThemeAction = "activate" | "delete" | "update";
+
+export interface BridgeThemeActionResponse {
+  message: string;
+  theme: string;
+}
+
+// ---------------------------------------------------------------------------
+// Users
+// ---------------------------------------------------------------------------
+
+export interface BridgeUserInfo {
+  id: number;
+  login: string;
+  email: string;
+  display_name: string;
+  roles: string[];
+  registered_at: string;
+  avatar_url: string | null;
+  posts_count: number;
+}
+
+export type BridgeUserAction = "create" | "delete" | "change_role";
+
+export interface BridgeUserActionResponse {
+  message: string;
+  user_id?: number;
+  username?: string;
+  email?: string;
+  role?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Content (Posts & Pages)
+// ---------------------------------------------------------------------------
+
+export interface BridgeContentItem {
+  id: number;
+  title: string;
+  type: "post" | "page";
+  status: "publish" | "draft" | "pending" | "private" | "trash";
+  slug: string;
+  modified_at: string;
+  published_at: string | null;
+  author: string;
+  url: string;
+  comment_count: number;
+}
+
+export type BridgeContentAction = "publish" | "draft" | "private" | "trash" | "delete";
+
+export interface BridgeContentActionResponse {
+  message: string;
+  post_id: number;
+}
+
+// ---------------------------------------------------------------------------
+// WooCommerce
+// ---------------------------------------------------------------------------
+
+export interface BridgeWooStats {
+  is_active: boolean;
+  currency: string;
+  currency_symbol: string;
+  revenue_today: number;
+  revenue_month: number;
+  orders_pending: number;
+  orders_processing: number;
+  orders_completed: number;
+  orders_cancelled: number;
+  orders_on_hold: number;
+  total_customers: number;
+  total_products: number;
+  low_stock_count: number;
+  out_of_stock_count: number;
+  checked_at: string;
+}
+
+export interface BridgeWooOrder {
+  id: number;
+  number: string;
+  status: string;
+  total: number;
+  currency: string;
+  customer_name: string;
+  customer_email: string;
+  items_count: number;
+  date: string;
+  payment_method: string;
+}
+
+export type BridgeWooOrderStatus =
+  | "pending" | "processing" | "on-hold"
+  | "completed" | "cancelled" | "refunded" | "failed";
+
+export interface BridgeWooProduct {
+  id: number;
+  name: string;
+  sku: string;
+  type: string;
+  price: number;
+  regular_price: number;
+  sale_price: number | null;
+  is_on_sale: boolean;
+  stock_status: "instock" | "outofstock" | "onbackorder";
+  stock_quantity: number | null;
+  manage_stock: boolean;
+  status: string;
+  total_sales: number;
+  image_url: string | null;
+}
+
+export interface BridgeWooCustomer {
+  id: number;
+  display_name: string;
+  email: string;
+  registered_at: string;
+  orders_count: number;
+  total_spent: number;
+  avatar_url: string | null;
+  city: string;
+  country: string;
+}
+
+// ---------------------------------------------------------------------------
+// Database
+// ---------------------------------------------------------------------------
+
+export interface BridgeDBTable {
+  name: string;
+  rows: number;
+  data_size_mb: number;
+  index_size_mb: number;
+  total_size_mb: number;
+  engine: string;
+  collation: string;
+  auto_increment: number | null;
+}
+
+export interface BridgeDBPendingCleanup {
+  transients: number;
+  spam_comments: number;
+  revisions: number;
+  auto_drafts: number;
+  total: number;
+}
+
+export interface BridgeDBStatusResponse {
+  tables: BridgeDBTable[];
+  total_tables: number;
+  total_size_mb: number;
+  db_version: string;
+  charset: string;
+  pending_cleanup: BridgeDBPendingCleanup;
+  checked_at: string;
+}
+
+export interface BridgeDBCleanupResponse {
+  message: string;
+  rows_deleted: number;
+}
+
+export type BridgeDBCleanupAction =
+  | "clean_transients" | "clean_spam_comments"
+  | "clean_post_revisions" | "clean_auto_drafts" | "clean_all";
+
+// ---------------------------------------------------------------------------
+// Updates
+// ---------------------------------------------------------------------------
+
+export interface BridgeWPCoreUpdate {
+  available: boolean;
+  version: string | null;
+  current: string;
+}
+
+export interface BridgeThemeUpdate {
+  slug: string;
+  name: string;
+  current_version: string;
+  new_version: string | null;
+}
+
+export interface BridgeUpdatesStatusResponse {
+  wp_core: BridgeWPCoreUpdate;
+  theme_updates: BridgeThemeUpdate[];
+  theme_updates_count: number;
+  plugin_updates_count: number;
+  checked_at: string;
+}
+
+export interface BridgeCoreUpdateResponse {
+  message: string;
+  updated: boolean;
+  new_version?: string;
+}
+

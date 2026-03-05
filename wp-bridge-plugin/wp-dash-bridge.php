@@ -22,6 +22,11 @@ require_once WPDASH_BRIDGE_PATH . 'includes/class-auth.php';
 require_once WPDASH_BRIDGE_PATH . 'includes/class-rate-limiter.php';
 require_once WPDASH_BRIDGE_PATH . 'includes/class-health.php';
 require_once WPDASH_BRIDGE_PATH . 'includes/class-plugins.php';
+require_once WPDASH_BRIDGE_PATH . 'includes/class-themes.php';
+require_once WPDASH_BRIDGE_PATH . 'includes/class-users.php';
+require_once WPDASH_BRIDGE_PATH . 'includes/class-content.php';
+require_once WPDASH_BRIDGE_PATH . 'includes/class-woocommerce.php';
+require_once WPDASH_BRIDGE_PATH . 'includes/class-database.php';
 require_once WPDASH_BRIDGE_PATH . 'includes/class-security.php';
 require_once WPDASH_BRIDGE_PATH . 'includes/class-seo.php';
 require_once WPDASH_BRIDGE_PATH . 'includes/class-logs.php';
@@ -40,6 +45,11 @@ add_action('rest_api_init', function () {
 
     (new WPDash_Health($auth, $rate_limiter))->register_routes();
     (new WPDash_Plugins($auth, $rate_limiter))->register_routes();
+    (new WPDash_Themes($auth, $rate_limiter))->register_routes();
+    (new WPDash_Users($auth, $rate_limiter))->register_routes();
+    (new WPDash_Content($auth, $rate_limiter))->register_routes();
+    (new WPDash_WooCommerce($auth, $rate_limiter))->register_routes();
+    (new WPDash_Database($auth, $rate_limiter))->register_routes();
     (new WPDash_Security($auth, $rate_limiter))->register_routes();
     (new WPDash_SEO($auth, $rate_limiter))->register_routes();
     (new WPDash_Logs($auth, $rate_limiter))->register_routes();

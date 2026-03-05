@@ -232,7 +232,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-50 mt-16 flex h-screen flex-col border-r border-gray-200 bg-white px-5 text-gray-900 transition-all duration-300 ease-in-out lg:mt-0 dark:border-gray-800 dark:bg-gray-900 ${
+      className={`fixed top-0 left-0 z-50 mt-16 flex h-screen flex-col border-r border-gray-200 bg-white px-5 text-gray-900 transition-all duration-300 ease-in-out lg:mt-0 dark:border-indigo-900/20 dark:bg-gradient-to-b dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 ${
         isExpanded || isMobileOpen ? "w-[290px]" : isHovered ? "w-[290px]" : "w-[90px]"
       } ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
@@ -243,11 +243,16 @@ const AppSidebar: React.FC = () => {
       >
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <span className="text-xl font-bold text-brand-500 dark:text-brand-400">
-              {process.env.NEXT_PUBLIC_APP_NAME || "WPDash"}
+            <span className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold text-white shadow-sm">
+                W
+              </span>
+              <span className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
+                WP <span className="text-brand-500 dark:text-brand-400">Dash</span>
+              </span>
             </span>
           ) : (
-            <span className="text-xl font-bold text-brand-500 dark:text-brand-400">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold text-white shadow-sm">
               W
             </span>
           )}

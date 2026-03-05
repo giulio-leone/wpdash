@@ -1,9 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import Image from "next/image";
+import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 import Button from "@/components/ui/button/Button";
-import { installPlugin } from "@/application/plugin/plugin-actions";
+import { usePluginsStore } from "@/stores/plugins-store";
+
+interface WpPlugin {
+  slug: string;
+  name: string;
+  version: string;
+  author: string;
+  rating: number;
+  shortDescription: string;
+  icon: string | null;
+}
 
 interface Props {
   siteId: string;
@@ -18,21 +29,84 @@ export default function PluginInstallModal({ siteId, onClose, onInstalled }: Pro
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState<WpPlugin[]>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const justSelectedRef = useRef(false); // prevents dropdown re-opening after selection
+
+  const installPluginAction = usePluginsStore((s) => s.installPlugin);
+
+  useEffect(() => {
+    if (mode !== "slug" || value.length < 2) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    // Skip debounce fetch if a suggestion was just selected
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+      return;
+    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSuggestLoading(true);
+      try {
+        const res = await fetch(`/api/wp-org/search?q=${encodeURIComponent(value)}`);
+        const data = await res.json();
+        setSuggestions(data.plugins ?? []);
+        setShowDropdown(true);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setSuggestLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [value, mode]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!value.trim()) return;
 
     setLoading(true);
     setError(null);
-    const result = await installPlugin(siteId, mode, value.trim());
+    setShowDropdown(false);
 
-    if (result.success) {
+    try {
+      await installPluginAction(siteId, mode, value.trim());
       setSuccess(true);
       setTimeout(onInstalled, 1500);
-    } else {
-      setError(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Installation failed");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const selectSuggestion = (plugin: WpPlugin) => {
+    justSelectedRef.current = true;
+    setValue(plugin.slug);
+    setShowDropdown(false);
+    setSuggestions([]);
   };
 
   return (
@@ -40,7 +114,7 @@ export default function PluginInstallModal({ siteId, onClose, onInstalled }: Pro
       <div
         className={cn(
           "w-full max-w-md rounded-2xl border bg-white p-6",
-          "dark:border-gray-700 dark:bg-gray-900",
+          "dark:border-gray-800 dark:bg-gray-900",
         )}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -58,7 +132,7 @@ export default function PluginInstallModal({ siteId, onClose, onInstalled }: Pro
         {/* Mode selector */}
         <div className="mb-4 flex gap-2">
           <button
-            onClick={() => setMode("slug")}
+            onClick={() => { setMode("slug"); setValue(""); setSuggestions([]); }}
             className={cn(
               "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               mode === "slug"
@@ -69,7 +143,7 @@ export default function PluginInstallModal({ siteId, onClose, onInstalled }: Pro
             WordPress.org Slug
           </button>
           <button
-            onClick={() => setMode("url")}
+            onClick={() => { setMode("url"); setValue(""); setSuggestions([]); setShowDropdown(false); }}
             className={cn(
               "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               mode === "url"
@@ -82,20 +156,78 @@ export default function PluginInstallModal({ siteId, onClose, onInstalled }: Pro
         </div>
 
         <form onSubmit={handleSubmit}>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {mode === "slug" ? "Plugin Slug" : "Plugin ZIP URL"}
+          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+            {mode === "slug" ? "Plugin Slug or Name" : "Plugin ZIP URL"}
           </label>
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder={mode === "slug" ? "e.g. akismet" : "https://example.com/plugin.zip"}
-            className={cn(
-              "mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm",
-              "dark:border-gray-700 dark:bg-gray-800 dark:text-white",
-              "focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500",
+
+          <div ref={dropdownRef} className="relative mb-4">
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
+              placeholder={mode === "slug" ? "e.g. akismet or Contact Form 7" : "https://example.com/plugin.zip"}
+              className={cn(
+                "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm",
+                "dark:border-gray-800 dark:bg-gray-900 dark:text-white",
+                "focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500",
+              )}
+              autoComplete="off"
+            />
+            {mode === "slug" && suggestLoading && (
+              <div className="absolute right-2 top-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+              </div>
             )}
-          />
+
+            {/* Autocomplete dropdown */}
+            {showDropdown && suggestions.length > 0 && (
+              <div className={cn(
+                "absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border",
+                "bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900",
+                "max-h-64 overflow-y-auto",
+              )}>
+                {suggestions.map((plugin) => (
+                  <button
+                    key={plugin.slug}
+                    type="button"
+                    onClick={() => selectSuggestion(plugin)}
+                    className={cn(
+                      "flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors",
+                      "hover:bg-gray-50 dark:hover:bg-gray-800",
+                    )}
+                  >
+                    {plugin.icon && (
+                      <Image
+                        src={plugin.icon}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="mt-0.5 h-8 w-8 flex-shrink-0 rounded"
+                        unoptimized
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {plugin.name}
+                        </span>
+                        <span className="text-xs text-gray-400">{plugin.version}</span>
+                      </div>
+                      <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                        {plugin.slug} · {plugin.author}
+                      </div>
+                    </div>
+                    {plugin.rating > 0 && (
+                      <div className="flex-shrink-0 text-xs text-yellow-500">
+                        ★ {(plugin.rating / 20).toFixed(1)}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {error && (
             <div className="mb-4 rounded-lg border border-error-200 bg-error-50 p-3 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-400">
@@ -110,10 +242,10 @@ export default function PluginInstallModal({ siteId, onClose, onInstalled }: Pro
           )}
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose} disabled={loading}>
+            <Button variant="outline" type="button" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
-            <Button variant="primary" disabled={loading || !value.trim()}>
+            <Button variant="primary" type="submit" disabled={loading || !value.trim()}>
               {loading ? "Installing…" : "Install"}
             </Button>
           </div>
@@ -122,3 +254,4 @@ export default function PluginInstallModal({ siteId, onClose, onInstalled }: Pro
     </div>
   );
 }
+

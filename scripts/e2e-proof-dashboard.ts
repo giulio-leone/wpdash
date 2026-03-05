@@ -141,7 +141,7 @@ async function main() {
       headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
       body: JSON.stringify({ email: USER_EMAIL, password: USER_PASSWORD }),
     });
-    const signupData = (await signupRes.json()) as any;
+    const signupData = (await signupRes.json()) as { user?: { id: string } };
     const userId = signupData.user?.id;
     info("User ID", userId || "FAILED");
 
@@ -151,7 +151,7 @@ async function main() {
       headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
       body: JSON.stringify({ email: USER_EMAIL, password: USER_PASSWORD }),
     });
-    const loginData = (await loginRes.json()) as any;
+    const loginData = (await loginRes.json()) as { access_token?: string };
     const accessToken = loginData.access_token;
 
     if (userId && accessToken) {
@@ -199,7 +199,7 @@ async function main() {
         status: "online",
       }),
     });
-    const siteArr = (await siteInsertRes.json()) as any[];
+    const siteArr = (await siteInsertRes.json()) as Array<{ id: string }>;
     const siteId = siteArr[0]?.id;
     info("Site ID", siteId || "FAILED");
     info("Site URL", WP_URL);
@@ -348,7 +348,7 @@ async function main() {
         headers: { Authorization: `Bearer ${wpToken}`, "Content-Type": "application/json" },
         body: JSON.stringify({ action: "activate", plugin: "hello.php" }),
       });
-      const manageData = (await manageRes.json()) as any;
+      const manageData = (await manageRes.json()) as { message?: string };
       info("API Activate", manageData.message || JSON.stringify(manageData));
       
       // Deactivate back
@@ -366,7 +366,11 @@ async function main() {
     const healthRes = await fetch(`${WP_URL}/?rest_route=/wpdash/v1/health`, {
       headers: { Authorization: `Bearer ${wpToken}` },
     });
-    const health = (await healthRes.json()) as any;
+    const health = (await healthRes.json()) as {
+      wp_version?: string; php_version?: string; db_version?: string;
+      db_latency_ms?: number; active_theme?: { name: string };
+      plugin_count?: { active: number; inactive: number };
+    };
     info("WordPress", health.wp_version);
     info("PHP", health.php_version);
     info("DB Version", health.db_version);
@@ -377,7 +381,7 @@ async function main() {
     const plugsRes = await fetch(`${WP_URL}/?rest_route=/wpdash/v1/plugins`, {
       headers: { Authorization: `Bearer ${wpToken}` },
     });
-    const plugs = (await plugsRes.json()) as any[];
+    const plugs = (await plugsRes.json()) as Array<{ is_active: boolean; name: string; version: string }>;
     console.log(`\n  ${YELLOW}Installed Plugins:${RESET}`);
     for (const p of plugs) {
       const status = p.is_active ? `${GREEN}active${RESET}` : `${DIM}inactive${RESET}`;

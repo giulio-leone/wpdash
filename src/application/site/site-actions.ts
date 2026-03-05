@@ -2,7 +2,7 @@
 
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
-import { generateSiteToken, hashToken } from "./token-service";
+import { generateSiteToken } from "./token-service";
 import { createSiteSchema, updateSiteSchema } from "./validation";
 import type { Site } from "@/domain/site/entity";
 import { db } from "@/infrastructure/database/drizzle-client";
@@ -46,8 +46,9 @@ export async function createSite(
   }
 
   const token = generateSiteToken();
-  const tokenHash = await hashToken(token);
-  const site = await repo.create({ userId, name, url }, tokenHash);
+  // Store raw token in DB — bridge validates by hashing: SHA-256(bearer) == stored_hash
+  // The tokenHash column stores the raw token so dashboard can call bridge
+  const site = await repo.create({ userId, name, url }, token);
 
   return { success: true, data: { site, token } };
 }
@@ -106,8 +107,8 @@ export async function regenerateToken(
   }
 
   const token = generateSiteToken();
-  const tokenHash = await hashToken(token);
-  await repo.updateTokenHash(siteId, tokenHash);
+  // Store raw token for bridge communication
+  await repo.updateTokenHash(siteId, token);
 
   return { success: true, data: { token } };
 }

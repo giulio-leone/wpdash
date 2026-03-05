@@ -44,4 +44,11 @@ export default defineConfig([
       "drizzle/enforce-update-with-where": "error",
     },
   },
+  {
+    files: ["scripts/**/*.ts", "scripts/*.ts"],
+    rules: {
+      "no-console": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 ]);

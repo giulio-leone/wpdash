@@ -1,5 +1,12 @@
 import type {
   BridgeBackupStatusResponse,
+  BridgeCoreUpdateResponse,
+  BridgeContentAction,
+  BridgeContentActionResponse,
+  BridgeContentItem,
+  BridgeDBCleanupAction,
+  BridgeDBCleanupResponse,
+  BridgeDBStatusResponse,
   BridgeErrorResponse,
   BridgeHealthResponse,
   BridgeLogLevel,
@@ -10,6 +17,18 @@ import type {
   BridgePluginInstallSource,
   BridgeSecurityResponse,
   BridgeSeoAuditResponse,
+  BridgeThemeAction,
+  BridgeThemeActionResponse,
+  BridgeThemeInfo,
+  BridgeUpdatesStatusResponse,
+  BridgeUserAction,
+  BridgeUserActionResponse,
+  BridgeUserInfo,
+  BridgeWooCustomer,
+  BridgeWooOrder,
+  BridgeWooOrderStatus,
+  BridgeWooProduct,
+  BridgeWooStats,
 } from "./types";
 import {
   WP_BRIDGE_TIMEOUT_MS,
@@ -162,6 +181,120 @@ export class WPBridgeClient {
       token,
       "/backup/status",
     );
+  }
+
+  // ── Themes ──────────────────────────────────────────────────────────────
+
+  async getThemes(siteUrl: string, token: string): Promise<BridgeThemeInfo[]> {
+    return this.get<BridgeThemeInfo[]>(siteUrl, token, "/themes");
+  }
+
+  async manageTheme(
+    siteUrl: string,
+    token: string,
+    action: BridgeThemeAction,
+    slug: string,
+  ): Promise<BridgeThemeActionResponse> {
+    return this.post<BridgeThemeActionResponse>(siteUrl, token, "/themes/manage", { action, slug });
+  }
+
+  async installTheme(
+    siteUrl: string,
+    token: string,
+    slug: string,
+  ): Promise<BridgeThemeActionResponse> {
+    return this.post<BridgeThemeActionResponse>(siteUrl, token, "/themes/install", { slug });
+  }
+
+  // ── Users ────────────────────────────────────────────────────────────────
+
+  async getUsers(siteUrl: string, token: string, role?: string): Promise<BridgeUserInfo[]> {
+    const path = role ? `/users?role=${encodeURIComponent(role)}` : "/users";
+    return this.get<BridgeUserInfo[]>(siteUrl, token, path);
+  }
+
+  async manageUser(
+    siteUrl: string,
+    token: string,
+    action: BridgeUserAction,
+    params: Record<string, string | number>,
+  ): Promise<BridgeUserActionResponse> {
+    return this.post<BridgeUserActionResponse>(siteUrl, token, "/users/manage", { action, ...params });
+  }
+
+  // ── Content ──────────────────────────────────────────────────────────────
+
+  async getContent(
+    siteUrl: string,
+    token: string,
+    type?: "all" | "posts" | "pages",
+  ): Promise<BridgeContentItem[]> {
+    const path = type && type !== "all" ? `/content?type=${type}` : "/content";
+    return this.get<BridgeContentItem[]>(siteUrl, token, path);
+  }
+
+  async manageContent(
+    siteUrl: string,
+    token: string,
+    action: BridgeContentAction,
+    postId: number,
+  ): Promise<BridgeContentActionResponse> {
+    return this.post<BridgeContentActionResponse>(siteUrl, token, "/content/manage", { action, post_id: postId });
+  }
+
+  // ── WooCommerce ──────────────────────────────────────────────────────────
+
+  async getWooStats(siteUrl: string, token: string): Promise<BridgeWooStats> {
+    return this.get<BridgeWooStats>(siteUrl, token, "/woocommerce/stats");
+  }
+
+  async getWooOrders(siteUrl: string, token: string, limit = 20): Promise<BridgeWooOrder[]> {
+    return this.get<BridgeWooOrder[]>(siteUrl, token, `/woocommerce/orders?limit=${limit}`);
+  }
+
+  async updateWooOrderStatus(
+    siteUrl: string,
+    token: string,
+    orderId: number,
+    status: BridgeWooOrderStatus,
+  ): Promise<{ message: string; order_id: number; status: string }> {
+    return this.post(siteUrl, token, "/woocommerce/orders/manage", { order_id: orderId, status });
+  }
+
+  async getWooProducts(siteUrl: string, token: string, limit = 30): Promise<BridgeWooProduct[]> {
+    return this.get<BridgeWooProduct[]>(siteUrl, token, `/woocommerce/products?limit=${limit}`);
+  }
+
+  async getWooCustomers(siteUrl: string, token: string, limit = 20): Promise<BridgeWooCustomer[]> {
+    return this.get<BridgeWooCustomer[]>(siteUrl, token, `/woocommerce/customers?limit=${limit}`);
+  }
+
+  // ── Database ─────────────────────────────────────────────────────────────
+
+  async getDBStatus(siteUrl: string, token: string): Promise<BridgeDBStatusResponse> {
+    return this.get<BridgeDBStatusResponse>(siteUrl, token, "/database/status");
+  }
+
+  async optimizeDB(siteUrl: string, token: string): Promise<{ message: string; tables_optimized: number; tables_failed: number }> {
+    return this.post(siteUrl, token, "/database/optimize", {});
+  }
+
+  async cleanupDB(
+    siteUrl: string,
+    token: string,
+    action: BridgeDBCleanupAction,
+  ): Promise<BridgeDBCleanupResponse> {
+    return this.post<BridgeDBCleanupResponse>(siteUrl, token, "/database/cleanup", { action });
+  }
+
+  // ── Updates ──────────────────────────────────────────────────────────────
+
+  async getUpdatesStatus(siteUrl: string, token: string): Promise<BridgeUpdatesStatusResponse> {
+    return this.get<BridgeUpdatesStatusResponse>(siteUrl, token, "/updates");
+  }
+
+  async applyWPCoreUpdate(siteUrl: string, token: string): Promise<BridgeCoreUpdateResponse> {
+    return this.post<BridgeCoreUpdateResponse>(siteUrl, token, "/updates/core", {});
   }
 
   // ── Internal helpers ────────────────────────────────────────────────────

@@ -64,7 +64,7 @@ export default function BulkUpdatePanel({ pluginSlug, currentSiteId, onClose }: 
       <div
         className={cn(
           "w-full max-w-lg rounded-2xl border bg-white p-6",
-          "dark:border-gray-700 dark:bg-gray-900",
+          "dark:border-gray-800 dark:bg-gray-900",
         )}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -94,7 +94,7 @@ export default function BulkUpdatePanel({ pluginSlug, currentSiteId, onClose }: 
               return (
                 <div
                   key={r.siteId}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+                  className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-800"
                 >
                   <span className="text-sm text-gray-900 dark:text-white">
                     {site?.name ?? r.siteId}
@@ -144,7 +144,7 @@ export default function BulkUpdatePanel({ pluginSlug, currentSiteId, onClose }: 
                         "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors",
                         selected.has(site.id)
                           ? "border-brand-500 bg-brand-50 dark:border-brand-400 dark:bg-brand-500/10"
-                          : "border-gray-200 dark:border-gray-700",
+                          : "border-gray-200 dark:border-gray-800",
                       )}
                     >
                       <input

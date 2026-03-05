@@ -67,7 +67,7 @@ export default function LogViewer({ siteId }: LogViewerProps) {
             }}
             className={cn(
               "rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm",
-              "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200",
+              "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200",
             )}
           >
             <option value="">All Levels</option>
@@ -89,7 +89,7 @@ export default function LogViewer({ siteId }: LogViewerProps) {
             }}
             className={cn(
               "rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm",
-              "dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200",
+              "dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200",
               "placeholder:text-gray-400",
             )}
           />
@@ -111,11 +111,11 @@ export default function LogViewer({ siteId }: LogViewerProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="px-3 py-2 font-medium text-gray-500 dark:text-gray-400">Time</th>
-              <th className="px-3 py-2 font-medium text-gray-500 dark:text-gray-400">Level</th>
-              <th className="px-3 py-2 font-medium text-gray-500 dark:text-gray-400">Message</th>
-              <th className="px-3 py-2 font-medium text-gray-500 dark:text-gray-400">Source</th>
+            <tr className="border-b border-gray-200 dark:border-gray-800">
+              <th className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Time</th>
+              <th className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Level</th>
+              <th className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Message</th>
+              <th className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Source</th>
             </tr>
           </thead>
           <tbody>
@@ -171,7 +171,7 @@ export default function LogViewer({ siteId }: LogViewerProps) {
           className={cn(
             "rounded-lg border border-gray-200 px-3 py-1.5 text-sm",
             "hover:bg-gray-50 disabled:opacity-50",
-            "dark:border-gray-700 dark:hover:bg-gray-800",
+            "dark:border-gray-800 dark:hover:bg-gray-800",
           )}
         >
           Previous
@@ -183,7 +183,7 @@ export default function LogViewer({ siteId }: LogViewerProps) {
           className={cn(
             "rounded-lg border border-gray-200 px-3 py-1.5 text-sm",
             "hover:bg-gray-50 disabled:opacity-50",
-            "dark:border-gray-700 dark:hover:bg-gray-800",
+            "dark:border-gray-800 dark:hover:bg-gray-800",
           )}
         >
           Next

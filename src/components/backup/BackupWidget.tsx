@@ -62,9 +62,9 @@ export default function BackupWidget({ siteId }: BackupWidgetProps) {
   const status = statusIndicator(record?.lastBackupAt ?? null);
 
   return (
-    <div className="space-y-4 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+    <div className="space-y-4 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Backup Status</h3>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">Backup Status</h3>
         <button
           onClick={handleRefresh}
           disabled={isFetching}

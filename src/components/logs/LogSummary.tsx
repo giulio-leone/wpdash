@@ -29,7 +29,7 @@ const cards: { key: keyof SeverityCount; label: string; color: string }[] = [
   {
     key: "deprecated",
     label: "Deprecated",
-    color: "border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400",
+    color: "border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400",
   },
 ];
 
@@ -53,7 +53,7 @@ export default function LogSummary({ siteId, onViewAll }: LogSummaryProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Log Summary</h3>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">Log Summary</h3>
         {onViewAll && (
           <button
             onClick={onViewAll}

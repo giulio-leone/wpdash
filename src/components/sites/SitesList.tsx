@@ -1,42 +1,45 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useEffect } from "react";
 import type { Site } from "@/domain/site/entity";
-import { getSites, deleteSite, regenerateToken } from "@/application/site/site-actions";
 import SiteCard from "./SiteCard";
 import AddSiteModal from "./AddSiteModal";
 import Button from "@/components/ui/button/Button";
 import { PlusIcon } from "@/icons";
+import { useSitesStore } from "@/stores/sites-store";
 
 interface SitesListProps {
   initialSites: Site[];
 }
 
 export default function SitesList({ initialSites }: SitesListProps) {
-  const [sites, setSites] = useState<Site[]>(initialSites);
   const [modalOpen, setModalOpen] = useState(false);
-  const [regenToken, setRegenToken] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
-  function refreshSites() {
-    startTransition(async () => {
-      const result = await getSites();
-      if (result.success) setSites(result.data);
-    });
-  }
+  const sites = useSitesStore((s) => s.sites);
+  const loading = useSitesStore((s) => s.loading);
+  const regenToken = useSitesStore((s) => s.regenToken);
+  const fetchSites = useSitesStore((s) => s.fetchSites);
+  const deleteSiteAction = useSitesStore((s) => s.deleteSite);
+  const regenerateTokenAction = useSitesStore((s) => s.regenerateToken);
+  const clearRegenToken = useSitesStore((s) => s.clearRegenToken);
+  const subscribeToRealtime = useSitesStore((s) => s.subscribeToRealtime);
+
+  // Hydrate store from SSR data, subscribe to realtime
+  useEffect(() => {
+    useSitesStore.setState({ sites: initialSites });
+    const unsubscribe = subscribeToRealtime();
+    return unsubscribe;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this site?")) return;
-    const result = await deleteSite(id);
-    if (result.success) refreshSites();
+    await deleteSiteAction(id);
   }
 
   async function handleRegenerate(id: string) {
     if (!confirm("Regenerate the API token? The old token will stop working.")) return;
-    const result = await regenerateToken(id);
-    if (result.success) {
-      setRegenToken(result.data.token);
-    }
+    await regenerateTokenAction(id);
   }
 
   return (
@@ -56,7 +59,7 @@ export default function SitesList({ initialSites }: SitesListProps) {
         </Button>
       </div>
 
-      {isPending && (
+      {loading && (
         <div className="mb-4 flex items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
         </div>
@@ -91,7 +94,7 @@ export default function SitesList({ initialSites }: SitesListProps) {
       <AddSiteModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSiteAdded={refreshSites}
+        onSiteAdded={fetchSites}
       />
 
       {/* Regenerated token dialog */}
@@ -104,8 +107,8 @@ export default function SitesList({ initialSites }: SitesListProps) {
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
               Copy this token now. It won&apos;t be shown again.
             </p>
-            <div className="mb-4 flex items-center gap-2 rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
-              <code className="flex-1 overflow-x-auto text-xs break-all text-gray-800 dark:text-gray-200">
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-gray-100 p-3 dark:bg-gray-800/60">
+              <code className="flex-1 overflow-x-auto break-all font-mono text-xs text-gray-800 dark:text-gray-200">
                 {regenToken}
               </code>
               <button
@@ -118,7 +121,7 @@ export default function SitesList({ initialSites }: SitesListProps) {
               </button>
             </div>
             <div className="flex justify-end">
-              <Button onClick={() => setRegenToken(null)}>Done</Button>
+              <Button onClick={clearRegenToken}>Done</Button>
             </div>
           </div>
         </div>
@@ -126,3 +129,4 @@ export default function SitesList({ initialSites }: SitesListProps) {
     </div>
   );
 }
+

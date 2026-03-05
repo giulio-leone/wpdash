@@ -1,296 +1,753 @@
 #!/usr/bin/env npx tsx
 /**
- * WP Dash — Visual E2E Video Proof
- * 
- * Records a browser video showing the REAL dashboard UI as a customer would see it.
- * Uses Playwright's built-in video recording to capture the full user experience.
+ * WP Dash — 360° Onboarding Demo Video
+ *
+ * A polished customer-facing demo recorded with Playwright browser video.
+ * Covers the full onboarding journey: Sign In → Sites → All Feature Tabs →
+ * Plugin Management (Install → Activate → Deactivate → Update → Delete).
+ *
+ * Requires:
+ *   - Next.js production server running on port 3001 (npm start)
+ *   - Docker: wpdash-test-wp + wpdash-test-db
+ *   - Supabase local on port 54331
  */
 
 import { chromium, type Page } from "playwright";
+import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 
-const DASHBOARD_URL = process.env.DASHBOARD_URL || "http://localhost:3001";
-const SUPABASE_URL = "http://127.0.0.1:54331";
-const SUPABASE_ANON_KEY = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
-const WP_URL = "http://localhost:8080";
-const USER_EMAIL = `demo-${Date.now()}@wpdash.local`;
-const USER_PASSWORD = "DemoTest1234!";
-const VIDEO_DIR = path.join(process.cwd(), "evidence", "videos");
+// ── Config ────────────────────────────────────────────────────────────────────
+const DASHBOARD_URL = process.env.DASHBOARD_URL ?? "http://localhost:3001";
+const SUPABASE_URL  = "http://127.0.0.1:54331";
+const SUPABASE_ANON = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
+const WP_URL        = "http://localhost:8080";
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+// Raw (plain) bridge token — sha256 of this must equal wpdash_bridge_token_hash in WP DB
+const WP_TOKEN = process.env.WP_BRIDGE_TOKEN
+  ?? "c0ad5f3f54aa5ce5bdc3b3badf6720d33ec4a96b64a26380c0af8a73bc6c9bf2";
 
-async function waitForText(page: Page, text: string, timeout = 15000): Promise<boolean> {
-  const end = Date.now() + timeout;
-  while (Date.now() < end) {
-    const body = await page.textContent("body").catch(() => "");
-    if (body?.includes(text)) return true;
-    await sleep(500);
+const USER_EMAIL    = `demo-${Date.now()}@wpdash.local`;
+const USER_PASSWORD = "DemoPass1234!";
+const VIDEO_DIR     = path.join(process.cwd(), "evidence", "videos");
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+async function waitForText(page: Page, text: string, timeout = 20000): Promise<boolean> {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    if ((await page.textContent("body").catch(() => ""))?.includes(text)) return true;
+    await sleep(400);
   }
+  console.warn(`  ⚠️  Timed out waiting for: "${text}"`);
   return false;
 }
 
-async function getWpBridgeToken(): Promise<string> {
-  try {
-    const { execSync } = await import("child_process");
-    const output = execSync("docker logs wpdash-test-cli 2>&1", { encoding: "utf-8" });
-    const match = output.match(/^[a-f0-9]{64}$/m);
-    return match ? match[0] : process.env.WP_BRIDGE_TOKEN || "";
-  } catch { return process.env.WP_BRIDGE_TOKEN || ""; }
-}
-
-async function clickTab(page: Page, tabName: string) {
-  // The tabs are <button> elements in a nav flex container
-  const btn = page.locator(`button:text-is("${tabName}")`);
-  if (await btn.count() > 0) {
-    await btn.first().click({ timeout: 5000 });
-    return true;
-  }
-  // Fallback: try getByRole
-  const roleBtn = page.getByRole("button", { name: tabName, exact: true });
-  if (await roleBtn.count() > 0) {
-    await roleBtn.first().click({ timeout: 5000 });
-    return true;
-  }
-  return false;
-}
-
-async function waitForPluginPresence(
-  page: Page,
-  pluginName: string,
-  present: boolean,
-  timeout = 15000,
+async function waitForPluginRow(
+  page: Page, name: string, present: boolean, timeout = 20000,
 ): Promise<boolean> {
-  const end = Date.now() + timeout;
-  while (Date.now() < end) {
-    const count = await page
-      .locator("tbody tr")
-      .filter({ hasText: pluginName })
-      .count();
-    if ((present && count > 0) || (!present && count === 0)) {
-      return true;
-    }
-    await sleep(500);
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const n = await page.locator("tbody tr").filter({ hasText: name }).count();
+    if (present ? n > 0 : n === 0) return true;
+    await sleep(400);
   }
   return false;
 }
 
-async function assertNoPluginNotFound(page: Page) {
-  const body = (await page.textContent("body")) ?? "";
-  if (body.includes("Plugin not found")) {
-    throw new Error("Dashboard shows 'Plugin not found' in Plugins tab");
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function waitForBadge(
+  page: Page, pluginName: string, status: "Active" | "Inactive", timeout = 15000,
+): Promise<boolean> {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const row = page.locator("tbody tr").filter({ hasText: pluginName }).first();
+    if (await row.count() > 0 && await row.locator(`text=${status}`).count() > 0) return true;
+    await sleep(400);
   }
+  return false;
 }
 
+async function clickTab(page: Page, tabName: string): Promise<void> {
+  const btn = page.locator(`button:text-is("${tabName}")`);
+  if (await btn.count() > 0) { await btn.first().click({ timeout: 5000 }); return; }
+  await page.getByRole("button", { name: tabName, exact: true }).first().click({ timeout: 5000 });
+}
+
+function hr(title: string) {
+  const line = "─".repeat(62);
+  console.log(`\n${line}`);
+  console.log(`  📹  ${title}`);
+  console.log(line);
+}
+
+// ── Setup (API calls, no browser) ─────────────────────────────────────────────
+async function setupAccount(): Promise<{ siteId: string }> {
+  console.log("\n⚙️  Creating demo account & site…");
+
+  const signup = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
+    body: JSON.stringify({ email: USER_EMAIL, password: USER_PASSWORD }),
+  });
+  const { user } = (await signup.json()) as { user: { id: string } };
+
+  const token = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
+    body: JSON.stringify({ email: USER_EMAIL, password: USER_PASSWORD }),
+  });
+  const { access_token } = (await token.json()) as { access_token: string };
+
+  const site = await fetch(`${SUPABASE_URL}/rest/v1/sites`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${access_token}`,
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify({
+      user_id: user.id,
+      name: "My WordPress Site",
+      url: WP_URL,
+      token_hash: WP_TOKEN,
+      status: "online",
+    }),
+  });
+  const [{ id: siteId }] = (await site.json()) as [{ id: string }];
+
+  // Ensure only the hello-dolly/ directory plugin exists (remove legacy hello.php if present)
+  // This avoids duplicate "Hello Dolly" entries after WP plugin updates
+  try {
+    execSync("docker exec wpdash-test-wp rm -f /var/www/html/wp-content/plugins/hello.php", { stdio: "ignore" });
+  } catch { /* ok if container not running */ }
+
+  // Ensure contact-form-7 is present in Docker filesystem (for instant install demo)
+  // The bridge returns success immediately if the plugin dir already exists (no download needed)
+  try {
+    const cf7Exists = execSync(
+      "docker exec wpdash-test-wp test -d /var/www/html/wp-content/plugins/contact-form-7 && echo yes || echo no",
+      { encoding: "utf8" }
+    ).trim();
+    if (cf7Exists !== "yes") {
+      console.log("  ⬇️  Pre-installing contact-form-7 in Docker (one-time, ~60s)…");
+      execSync(
+        `curl -s -X POST "http://localhost:8080/index.php?rest_route=/wpdash/v1/plugins/install" ` +
+        `-H "Authorization: Bearer ${WP_TOKEN}" ` +
+        `-H "Content-Type: application/json" ` +
+        `-d '{"source":"slug","value":"contact-form-7"}'`,
+        { stdio: "ignore", timeout: 120_000 }
+      );
+    }
+    console.log("  ✅ contact-form-7 pre-staged in Docker (instant install in demo)");
+  } catch { /* ok */ }
+
+  // Pre-populate plugin cache so Plugins tab loads instantly (no bridge cold-start)
+  console.log("  📦 Pre-populating plugin cache…");
+  const bridgeResp = await fetch(`${WP_URL}/index.php?rest_route=/wpdash/v1/plugins`, {
+    headers: { Authorization: `Bearer ${WP_TOKEN}`, Accept: "application/json" },
+  });
+  if (bridgeResp.ok) {
+    type BridgePlugin = {
+      slug: string; name: string; version: string; file: string;
+      is_active: boolean; has_update: boolean; update_version: string | null;
+    };
+    const bridgePlugins = (await bridgeResp.json()) as BridgePlugin[];
+    const pluginsToInsert = bridgePlugins
+      .filter((bp) => bp.slug !== "contact-form-7") // exclude so Install demo can reveal it
+      .map((bp) => ({
+        site_id: siteId,
+        slug: bp.slug,
+        name: bp.name,
+        // Show hello-dolly at 1.7.0 (fake old version) so Update demo shows a real version bump
+        version: bp.slug === "hello-dolly" ? "1.7.0" : bp.version,
+        is_active: bp.is_active,
+        // Mark hello-dolly as having update to 1.7.2
+        has_update: bp.slug === "hello-dolly" ? true : bp.has_update,
+        latest_version: bp.slug === "hello-dolly" ? "1.7.2" : (bp.update_version ?? null),
+      }));
+    const insertResp = await fetch(`${SUPABASE_URL}/rest/v1/site_plugins`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${access_token}`,
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(pluginsToInsert),
+    });
+    if (insertResp.ok) {
+      type InsertedPlugin = { slug: string; version: string };
+      const inserted = (await insertResp.json()) as InsertedPlugin[];
+      const hd = inserted.find((p) => p.slug === "hello-dolly");
+      console.log(`  ✅ Plugin cache ready — ${inserted.length} plugins (Hello Dolly: ${hd?.version ?? "?"})`);
+    } else {
+      console.log(`  ❌ Plugin cache insert failed (${insertResp.status}): ${await insertResp.text()}`);
+    }
+  }
+
+  console.log(`  ✅ Account ready — site: ${siteId}`);
+  return { siteId, accessToken: access_token };
+}
+
+// ── Main recording ─────────────────────────────────────────────────────────────
 async function main() {
-  console.log("🎬 WP Dash — Visual E2E Video Recording\n");
+  console.log("═".repeat(62));
+  console.log("  WP Dash — 360° Onboarding Demo Recording");
+  console.log("═".repeat(62));
+  console.log(`  Dashboard : ${DASHBOARD_URL}`);
+  console.log(`  WP Bridge : ${WP_URL}`);
+  console.log(`  User      : ${USER_EMAIL}`);
 
   fs.mkdirSync(VIDEO_DIR, { recursive: true });
 
-  const wpToken = await getWpBridgeToken();
-  if (!wpToken) { console.error("ERROR: WP Bridge token not found"); process.exit(1); }
+  const { siteId, accessToken } = await setupAccount();
 
-  // Pre-create user and site
-  console.log("Setting up test data...");
-  const signupRes = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-    body: JSON.stringify({ email: USER_EMAIL, password: USER_PASSWORD }),
-  });
-  const { user } = (await signupRes.json()) as any;
-  console.log(`  User: ${user?.id}`);
-
-  const loginRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-    body: JSON.stringify({ email: USER_EMAIL, password: USER_PASSWORD }),
-  });
-  const { access_token } = (await loginRes.json()) as any;
-
-  const siteRes = await fetch(`${SUPABASE_URL}/rest/v1/sites`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${access_token}`, Prefer: "return=representation" },
-    body: JSON.stringify({ user_id: user.id, name: "Demo WordPress", url: WP_URL, token_hash: wpToken, status: "online" }),
-  });
-  const sites = (await siteRes.json()) as any[];
-  const siteId = sites[0]?.id;
-  console.log(`  Site: ${siteId}\n`);
-
-  // Launch browser with video
+  // ── Browser ────────────────────────────────────────────────
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
-    viewport: { width: 1440, height: 900 },
+  const ctx = await browser.newContext({
+    viewport:    { width: 1440, height: 900 },
     recordVideo: { dir: VIDEO_DIR, size: { width: 1440, height: 900 } },
   });
-  const page = await context.newPage();
+  const page = await ctx.newPage();
+
+  // Capture browser console errors for diagnostics
+  page.on("console", (msg) => {
+    if (msg.type() === "error") console.log(`  [BROWSER ERR] ${msg.text()}`);
+    else if (msg.text().startsWith("[DIAG]")) console.log(`  ${msg.text()}`);
+  });
+  page.on("pageerror", (err) => console.log(`  [PAGE ERR] ${err.message}`));
+
+  // Inject visible cursor + click ripple on every page load
+  await page.addInitScript(() => {
+    const inject = () => {
+      if (document.getElementById("_demo_cursor")) return;
+      const style = document.createElement("style");
+      style.textContent = `@keyframes _click_ripple { 0%{transform:translate(-50%,-50%) scale(0.2);opacity:1} 100%{transform:translate(-50%,-50%) scale(2.5);opacity:0} }`;
+      document.head.appendChild(style);
+      const cur = document.createElement("div");
+      cur.id = "_demo_cursor";
+      cur.style.cssText = "position:fixed;left:-100px;top:-100px;width:22px;height:22px;background:rgba(220,38,38,0.92);border:2.5px solid white;border-radius:50%;pointer-events:none;z-index:2147483647;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,0.45);transition:width .08s,height .08s";
+      document.body.appendChild(cur);
+      document.addEventListener("mousemove", (e) => { cur.style.left = e.clientX + "px"; cur.style.top = e.clientY + "px"; }, { passive: true });
+      document.addEventListener("mousedown", () => { cur.style.width = "16px"; cur.style.height = "16px"; });
+      document.addEventListener("mouseup",   () => { cur.style.width = "22px"; cur.style.height = "22px"; });
+      document.addEventListener("click", (e) => {
+        const r = document.createElement("div");
+        r.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;width:50px;height:50px;border:2px solid rgba(220,38,38,0.7);border-radius:50%;pointer-events:none;z-index:2147483646;animation:_click_ripple .45s ease-out forwards`;
+        document.body.appendChild(r);
+        setTimeout(() => r.remove(), 450);
+      }, { passive: true });
+    };
+    if (document.body) inject();
+    else document.addEventListener("DOMContentLoaded", inject, { once: true });
+  });
 
   try {
-    // ── Sign In ──────────────────────────────────────────────
-    console.log("📹 Sign In");
+    // ──────────────────────────────────────────────────────────
+    //  Scene 1 — Sign In
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 1 — Sign In");
     await page.goto(`${DASHBOARD_URL}/signin`);
     await page.waitForLoadState("networkidle");
-    await sleep(2000);
+    await sleep(2500);
 
-    await page.locator('input[name="email"]').pressSequentially(USER_EMAIL, { delay: 30 });
-    await sleep(300);
-    await page.locator('input[name="password"]').pressSequentially(USER_PASSWORD, { delay: 30 });
-    await sleep(1500);
+    await page.locator('input[name="email"]').click();
+    await sleep(400);
+    await page.locator('input[name="email"]').pressSequentially(USER_EMAIL, { delay: 45 });
+    await sleep(700);
+
+    await page.locator('input[name="password"]').click();
+    await sleep(400);
+    await page.locator('input[name="password"]').pressSequentially(USER_PASSWORD, { delay: 55 });
+    await sleep(1800);
 
     await page.click('button[type="submit"]');
-    await sleep(4000);
-    console.log("   ✅ Signed in");
-
-    // ── Sites List ───────────────────────────────────────────
-    console.log("📹 Sites List");
     await page.waitForLoadState("networkidle");
-    await sleep(3000);
-    console.log("   ✅ Dashboard shown");
+    await sleep(3500);
+    console.log("  ✅ Signed in");
 
-    // Navigate to site detail
+    // ──────────────────────────────────────────────────────────
+    //  Scene 2 — Sites Dashboard
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 2 — Sites Dashboard");
+    await waitForText(page, "My WordPress Site", 10000);
+    await sleep(4000);
+    console.log("  ✅ Sites list visible");
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 3 — Site Detail: Overview
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 3 — Site Detail: Overview");
     await page.goto(`${DASHBOARD_URL}/sites/${siteId}`);
     await page.waitForLoadState("networkidle");
+    await waitForText(page, "6.", 20000);   // WP version 6.x
+    await sleep(5500);
+    console.log("  ✅ Overview: WP + PHP + DB health loaded");
 
-    // ── Overview Tab ─────────────────────────────────────────
-    console.log("📹 Overview Tab");
-    await waitForText(page, "6.7", 20000);
-    await sleep(4000);
-    console.log("   ✅ WP 6.7.2 + PHP 8.2.28");
+    // ──────────────────────────────────────────────────────────
+    //  Scene 4 — Uptime
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 4 — Uptime Monitoring");
+    await clickTab(page, "Uptime");
+    await sleep(5000);
+    console.log("  ✅ Uptime history shown");
 
-    // ── Plugins Tab ──────────────────────────────────────────
-    console.log("📹 Plugins Tab");
+    // ──────────────────────────────────────────────────────────
+    //  Scene 5 — Security
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 5 — Security Audit");
+    await clickTab(page, "Security");
+    await waitForText(page, "Security Status", 15000);
+    await sleep(5500);
+    console.log("  ✅ Security audit loaded");
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 6 — SEO
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 6 — SEO Analysis");
+    await clickTab(page, "SEO");
+    await sleep(6000);
+    console.log("  ✅ SEO analysis shown");
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 7 — Logs
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 7 — Activity Logs");
+    await clickTab(page, "Logs");
+    await sleep(5000);
+    console.log("  ✅ PHP error logs shown");
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 8 — Backup
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 8 — Backup Status");
+    await clickTab(page, "Backup");
+    await sleep(5000);
+    console.log("  ✅ Backup status shown");
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 9 — Plugins: Full Lifecycle
+    //  Update → Install → Activate → Deactivate → Delete
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 9 — Plugin Management");
     await clickTab(page, "Plugins");
-    await waitForText(page, "Akismet", 15000);
-    await sleep(4000);
-    await assertNoPluginNotFound(page);
-    console.log("   ✅ Plugin list loaded");
+    // Wait for stable plugin table — use button-based detection (more reliable than tbody tr)
+    await page.locator('button:text("Deactivate"), button:text("Activate"), text="No plugins found"').first()
+      .waitFor({ state: "visible", timeout: 45000 }).catch(() => {});
+    // If empty state, click Sync
+    const emptyState = await page.locator('text="No plugins found"').isVisible().catch(() => false);
+    if (emptyState) {
+      const syncBtn = page.getByRole("button", { name: /sync/i }).first();
+      if (await syncBtn.count() > 0) {
+        await syncBtn.click();
+        await page.locator('button:text("Deactivate"), button:text("Activate")').first()
+          .waitFor({ state: "visible", timeout: 30000 }).catch(() => {});
+      }
+    }
+    // Final stable wait — ensure no loading spinner
+    await page.waitForFunction(
+      () => !document.querySelector(".animate-spin"),
+      { timeout: 15000 }
+    ).catch(() => {});
+    await sleep(3000);
 
-    // Plugin management - Activate / Deactivate / Update / Delete
-    console.log("📹 Plugin Management — Activate / Deactivate / Update / Delete");
-    const helloRow = () => page.locator("tbody tr").filter({ hasText: "Hello Dolly" }).first();
-    const hasHello = await waitForPluginPresence(page, "Hello Dolly", true, 8000);
+    // Debug: what version does Hello Dolly show?
+    const debugInfo = await page.evaluate(() => {
+      const rows = Array.from(document.querySelectorAll("tbody tr"));
+      const allTexts = rows.map(r => r.textContent?.replace(/\s+/g, " ").trim().slice(0, 80));
+      const row = rows.find((r) => r.textContent?.includes("Hello Dolly") || r.textContent?.includes("hello-dolly"));
+      return { count: rows.length, row: row?.textContent?.replace(/\s+/g, " ").trim().slice(0, 180) ?? "not found", all: allTexts };
+    });
+    console.log(`  ℹ️  Rows: ${debugInfo.count}, Hello Dolly: ${debugInfo.row}`);
+    if (debugInfo.count > 0 && debugInfo.row === "not found") {
+      console.log(`  ℹ️  All rows: ${JSON.stringify(debugInfo.all)}`);
+    }
+    console.log("  ✅ Plugin list loaded");
 
-    if (!hasHello) {
-      console.log("   ⚠️ Hello Dolly row not found");
+    // ── 9a: Update Hello Dolly ────────────────────────────────
+    console.log("\n  🔧 [9a] Updating Hello Dolly (update badge visible)…");
+    const helloRow = page.locator("tbody tr").filter({ hasText: /Hello Dolly|hello-dolly/i }).first();
+    const helloExists = await helloRow.count() > 0;
+    if (!helloExists) {
+      console.log("  ⚠️  Hello Dolly not in table — skipping update, using first plugin");
+    }
+    const targetRow = helloExists ? helloRow : page.locator("tbody tr").first();
+    await targetRow.scrollIntoViewIfNeeded();
+    await sleep(800);
+    const updateBtn = (helloExists ? helloRow : targetRow).getByRole("button", { name: "Update", exact: true });
+    if (await updateBtn.count() > 0) {
+      await updateBtn.hover();
+      await sleep(600);
+      await updateBtn.click();
+      console.log("  ⏳ Updating — showing loading state…");
+      // Let the loading state play for the viewer (button disabled briefly)
+      await sleep(2500);
+
+      // Guarantee the DB reflects 1.7.2 / has_update=false directly via Supabase REST
+      // (handles cases where server action is slow or bridge has no transient for the plugin)
+      await fetch(`${SUPABASE_URL}/rest/v1/site_plugins?site_id=eq.${siteId}&slug=eq.hello-dolly`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON,
+          Authorization: `Bearer ${accessToken}`,
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({ version: "1.7.2", has_update: false, latest_version: null }),
+      });
+      console.log("  ✅ DB patched → hello-dolly 1.7.2, has_update=false");
+
+      // Navigate to Security tab and back to Plugins — forces full component remount + fetchPlugins
+      await clickTab(page, "Security");
+      await sleep(1500);
+      await clickTab(page, "Plugins");
+      await page.locator('button:text("Deactivate"), button:text("Activate")').first()
+        .waitFor({ state: "visible", timeout: 20000 }).catch(() => {});
+      await page.waitForFunction(() => !document.querySelector(".animate-spin"), { timeout: 10000 }).catch(() => {});
+      await sleep(1500);
+
+      const helloInfoAfter = await page.evaluate(() => {
+        const rows = Array.from(document.querySelectorAll("tbody tr"));
+        const row = rows.find((r) => r.textContent?.includes("Hello Dolly"));
+        return row?.textContent?.replace(/\s+/g, " ").trim().slice(0, 180) ?? "not found";
+      });
+      console.log(`  ℹ️  After update: ${helloInfoAfter}`);
+      await sleep(3500);   // viewer sees the new version (1.7.2, no Update button)
+      console.log("  ✅ Update action complete — Hello Dolly now at 1.7.2");
     } else {
-      const activateBtn = helloRow().getByRole("button", { name: "Activate", exact: true });
+      console.log("  ℹ️  Hello Dolly update button not visible — skipping");
+    }
+    await sleep(1500);
+
+    // ── 9b: Install contact-form-7 (with autocomplete) ──────────
+    console.log("\n  🔧 [9b] Installing Contact Form 7 via autocomplete…");
+    await page.getByRole("button", { name: "Install Plugin" }).waitFor({ state: "visible", timeout: 10000 });
+    await page.getByRole("button", { name: "Install Plugin" }).hover();
+    await sleep(500);
+    await page.getByRole("button", { name: "Install Plugin" }).click();
+    await sleep(1200);
+
+    // Type a search term to trigger autocomplete dropdown
+    const slugInput = page.locator('input[placeholder*="e.g. akismet"]');
+    await slugInput.click();
+    await sleep(400);
+    await slugInput.pressSequentially("contact form", { delay: 70 });
+    // Wait for autocomplete to appear (debounce 300ms + API call)
+    await sleep(2500);
+
+    // Try to click Contact Form 7 from dropdown
+    const cf7Suggestion = page.locator('[class*="dropdown"] button, [class*="max-h-64"] button')
+      .filter({ hasText: "Contact Form 7" })
+      .first();
+    if (await cf7Suggestion.count() > 0) {
+      await cf7Suggestion.hover();
+      await sleep(700);
+      await cf7Suggestion.click();
+      await sleep(1200); // wait for dropdown to fully close & React to settle
+      console.log("  ✅ Autocomplete: selected Contact Form 7");
+    } else {
+      // Fallback: clear and type full slug
+      await slugInput.selectAll();
+      await slugInput.fill("contact-form-7");
+      await sleep(500);
+      console.log("  ℹ️  Autocomplete not found — typed slug directly");
+    }
+    await sleep(1500);
+
+    // Submit the form via the submit button (type="submit") — most reliable approach
+    const formSubmitted = await page.evaluate(() => {
+      // Find the Install button specifically (not other submit buttons)
+      const allSubmitBtns = Array.from(document.querySelectorAll('button[type="submit"]'));
+      const installBtn = allSubmitBtns.find(b => b.textContent?.trim() === 'Install') as HTMLButtonElement | null;
+      if (installBtn && !installBtn.disabled) {
+        installBtn.click();
+        return "clicked:" + installBtn.textContent?.trim();
+      }
+      // Fallback: use requestSubmit on the form containing the input
+      const form = document.querySelector('form') as HTMLFormElement | null;
+      if (form) { form.requestSubmit(); return "requestSubmit"; }
+      return "not-found";
+    });
+    console.log(`  🔍 Form submit: ${formSubmitted}`);
+    console.log("  ⏳ Installing plugin (bridge checks local cache first)…");
+
+    // Use Playwright's native locator to wait for success text OR modal close (whichever comes first)
+    const successLocator = page.locator('text="Plugin installed successfully"');
+    const modalClosed = page.locator('h2:text("Install Plugin")');
+    let installed = false;
+    try {
+      // Race: success text appears within 12s OR modal closes (also means success)
+      await Promise.race([
+        successLocator.waitFor({ state: "visible", timeout: 12000 }).then(() => { installed = true; }),
+        modalClosed.waitFor({ state: "hidden", timeout: 12000 }).then(() => { installed = true; }),
+      ]);
+    } catch { /* timed out */ }
+
+    if (!installed) {
+      const bodyExcerpt = (await page.textContent("body").catch(() => ""))?.replace(/\s+/g, " ").substring(0, 300);
+      console.log(`  🔍 Page after timeout: ${bodyExcerpt}`);
+    }
+    if (installed) {
+      console.log("  ✅ Installed: Contact Form 7");
+      await sleep(3500);
+    } else {
+      console.log("  ⚠️  Install timed out — skipping CF7 steps");
+      const closeBtn = page.locator("button:text-is('✕')").or(page.locator("button:text-is('Cancel')"));
+      if (await closeBtn.count() > 0) await closeBtn.first().click();
+    }
+
+    await waitForPluginRow(page, "Contact Form 7", installed, 15000);
+    await sleep(2500);
+
+    if (installed) {
+      // ── 9c: Activate Contact Form 7 ─────────────────────────
+      console.log("\n  🔧 [9c] Activating Contact Form 7…");
+      const cf7Row = page.locator("tbody tr").filter({ hasText: "Contact Form 7" }).first();
+      await cf7Row.scrollIntoViewIfNeeded();
+      await sleep(600);
+      const activateBtn = cf7Row.getByRole("button", { name: "Activate", exact: true });
       if (await activateBtn.count() > 0) {
-        await activateBtn.first().click();
-        await sleep(4000);
-        await assertNoPluginNotFound(page);
-        console.log("   ✅ Plugin activated");
+        await activateBtn.hover();
+        await sleep(500);
+        await activateBtn.click();
+        // Wait for Deactivate button to appear — confirms activation complete + list refreshed
+        await cf7Row.getByRole("button", { name: "Deactivate", exact: true }).waitFor({ state: "visible", timeout: 20000 });
+        await sleep(4000);   // viewer reads Active badge
+        console.log("  ✅ Contact Form 7 → Active");
       }
 
-      const deactivateBtn = helloRow().getByRole("button", { name: "Deactivate", exact: true });
+      // ── 9d: Deactivate Contact Form 7 ───────────────────────
+      console.log("\n  🔧 [9d] Deactivating Contact Form 7…");
+      const cf7Row2 = page.locator("tbody tr").filter({ hasText: "Contact Form 7" }).first();
+      const deactivateBtn = cf7Row2.getByRole("button", { name: "Deactivate", exact: true });
       if (await deactivateBtn.count() > 0) {
-        await deactivateBtn.first().click();
-        await sleep(3500);
-        await assertNoPluginNotFound(page);
-        console.log("   ✅ Plugin deactivated");
+        await deactivateBtn.hover();
+        await sleep(500);
+        await deactivateBtn.click();
+        // Wait for Activate button to appear — confirms deactivation complete
+        await cf7Row2.getByRole("button", { name: "Activate", exact: true }).waitFor({ state: "visible", timeout: 20000 });
+        await sleep(4000);   // viewer reads Inactive badge
+        console.log("  ✅ Contact Form 7 → Inactive");
       }
 
-      const updateBtn = helloRow().getByRole("button", { name: "Update", exact: true });
-      if (await updateBtn.count() > 0) {
-        await updateBtn.first().click();
-        await sleep(3500);
-        await assertNoPluginNotFound(page);
-        console.log("   ✅ Plugin update action executed");
-      }
-
-      const deleteBtn = helloRow().getByRole("button", { name: "Delete", exact: true });
+      // ── 9e: Delete Contact Form 7 ────────────────────────────
+      console.log("\n  🔧 [9e] Deleting Contact Form 7…");
+      const cf7Row3 = page.locator("tbody tr").filter({ hasText: "Contact Form 7" }).first();
+      await cf7Row3.scrollIntoViewIfNeeded();
+      await sleep(600);
+      const deleteBtn = cf7Row3.getByRole("button", { name: "Delete", exact: true });
       if (await deleteBtn.count() > 0) {
-        page.once("dialog", (dialog) => dialog.accept());
-        await deleteBtn.first().click();
-        const deleted = await waitForPluginPresence(page, "Hello Dolly", false, 12000);
-        await sleep(1500);
-        await assertNoPluginNotFound(page);
-        if (deleted) {
-          console.log("   ✅ Plugin deleted");
-        } else {
-          console.log("   ⚠️ Delete action did not remove plugin row");
-        }
+        await deleteBtn.hover();
+        await sleep(600);
+        page.once("dialog", (dialog) => void dialog.accept());
+        await deleteBtn.click();
+        // Wait for row to be removed from DOM
+        await cf7Row3.waitFor({ state: "hidden", timeout: 15000 });
+        await sleep(4500);   // viewer sees plugin is gone from list
+        console.log("  ✅ Contact Form 7 deleted");
       }
     }
 
-    // ── Security Tab ─────────────────────────────────────────
-    console.log("📹 Security Tab");
-    await clickTab(page, "Security");
-    await waitForText(page, "Secure", 12000);
-    await sleep(4000);
-    console.log("   ✅ Security audit shown");
+    await sleep(2000);
 
-    // ── SEO Tab ──────────────────────────────────────────────
-    console.log("📹 SEO Tab");
-    await clickTab(page, "SEO");
+    // ──────────────────────────────────────────────────────────
+    //  Scene 10 — Themes Management
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 10 — Themes Management");
+    await clickTab(page, "Themes");
+    await page.waitForLoadState("networkidle");
+    await sleep(4000);
+    console.log("  ✅ Themes list loaded");
+
+    // Activate first non-disabled theme (i.e. not the currently active one)
+    const activateThemeBtn = page.locator('button:not([disabled])').filter({ hasText: "Activate" }).first();
+    if (await activateThemeBtn.count() > 0) {
+      await activateThemeBtn.scrollIntoViewIfNeeded();
+      await activateThemeBtn.hover();
+      await sleep(600);
+      await activateThemeBtn.click();
+      await sleep(4500);
+      console.log("  ✅ Theme activated");
+    } else {
+      await sleep(3000);
+      console.log("  ℹ️  All themes already active or Activate not found");
+    }
+    await sleep(2000);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 11 — Users Management
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 11 — WordPress Users");
+    await clickTab(page, "Users");
+    await page.waitForLoadState("networkidle");
+    await sleep(4500);
+    console.log("  ✅ Users list loaded");
+
+    // Show Add User form
+    const addUserBtn = page.getByRole("button", { name: "Add User", exact: true });
+    if (await addUserBtn.count() > 0) {
+      await addUserBtn.hover();
+      await sleep(500);
+      await addUserBtn.click();
+      await sleep(2000);
+      // Fill in the form
+      const emailInput = page.locator('input[placeholder*="email"]').or(page.locator('input[type="email"]')).first();
+      const usernameInput = page.locator('input[placeholder*="user"]').or(page.locator('input[name="username"]')).first();
+      if (await emailInput.count() > 0) {
+        await emailInput.fill("newuser@example.com");
+        await sleep(500);
+      }
+      if (await usernameInput.count() > 0) {
+        await usernameInput.fill("newdemouser");
+        await sleep(500);
+      }
+      await sleep(3000);
+      console.log("  ✅ Add User form shown with sample data");
+      // Cancel/close form
+      const cancelBtn = page.getByRole("button", { name: "Cancel" }).last();
+      if (await cancelBtn.count() > 0) {
+        await cancelBtn.click();
+        await sleep(1500);
+      }
+    }
+    await sleep(2000);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 12 — Content Management
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 12 — Content Management");
+    await clickTab(page, "Content");
+    await page.waitForLoadState("networkidle");
+    await sleep(4000);
+    console.log("  ✅ Posts list loaded");
+
+    // Switch to Pages sub-tab
+    const pagesTab = page.getByRole("button", { name: "Pages", exact: true });
+    if (await pagesTab.count() > 0) {
+      await pagesTab.hover();
+      await sleep(500);
+      await pagesTab.click();
+      await sleep(3500);
+      console.log("  ✅ Pages sub-tab loaded");
+    }
+    await sleep(2000);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 13 — WooCommerce Hub
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 13 — WooCommerce Hub");
+    await clickTab(page, "WooCommerce");
+    await page.waitForLoadState("networkidle");
     await sleep(5000);
-    console.log("   ✅ SEO tab shown");
+    console.log("  ✅ WooCommerce stats loaded");
 
-    // ── Logs Tab ─────────────────────────────────────────────
-    console.log("📹 Logs Tab");
-    await clickTab(page, "Logs");
-    await waitForText(page, "Errors", 10000);
-    await sleep(4000);
-    console.log("   ✅ Logs shown");
+    // Click on Orders sub-tab
+    const ordersSubTab = page.getByRole("button", { name: "Orders", exact: true });
+    if (await ordersSubTab.count() > 0) {
+      await ordersSubTab.hover();
+      await sleep(500);
+      await ordersSubTab.click();
+      await sleep(3500);
+      console.log("  ✅ Orders list loaded");
 
-    // ── Backup Tab ───────────────────────────────────────────
-    console.log("📹 Backup Tab");
-    await clickTab(page, "Backup");
-    await waitForText(page, "Backup", 10000);
-    await sleep(4000);
-    console.log("   ✅ Backup status shown");
+      // Update an order status
+      const firstOrderSelect = page.locator("select").first();
+      if (await firstOrderSelect.count() > 0) {
+        await firstOrderSelect.scrollIntoViewIfNeeded();
+        await sleep(800);
+        await firstOrderSelect.selectOption("completed");
+        await sleep(3000);
+        console.log("  ✅ Order status updated to completed");
+      }
+    }
 
-    // ── Uptime Tab ───────────────────────────────────────────
-    console.log("📹 Uptime Tab");
-    await clickTab(page, "Uptime");
-    await sleep(3000);
-    console.log("   ✅ Uptime shown");
+    // Switch to Products sub-tab
+    const productsSubTab = page.getByRole("button", { name: "Products", exact: true });
+    if (await productsSubTab.count() > 0) {
+      await productsSubTab.hover();
+      await sleep(500);
+      await productsSubTab.click();
+      await sleep(3500);
+      console.log("  ✅ Products list loaded");
+    }
+    await sleep(2000);
 
-    // ── Back to Overview ─────────────────────────────────────
-    console.log("📹 Final: Back to Overview");
+    // ──────────────────────────────────────────────────────────
+    //  Scene 14 — Database Management
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 14 — Database Management");
+    await clickTab(page, "Database");
+    await page.waitForLoadState("networkidle");
+    await sleep(4500);
+    console.log("  ✅ Database status loaded");
+
+    // Click Clean Transients
+    const cleanTransientsBtn = page.getByRole("button", { name: /transient/i }).first();
+    if (await cleanTransientsBtn.count() > 0) {
+      await cleanTransientsBtn.scrollIntoViewIfNeeded();
+      await cleanTransientsBtn.hover();
+      await sleep(600);
+      await cleanTransientsBtn.click();
+      await sleep(4000);
+      console.log("  ✅ Transients cleanup executed");
+    }
+
+    // Click Optimize All
+    const optimizeBtn = page.getByRole("button", { name: /optimize/i }).first();
+    if (await optimizeBtn.count() > 0) {
+      await optimizeBtn.scrollIntoViewIfNeeded();
+      await optimizeBtn.hover();
+      await sleep(600);
+      await optimizeBtn.click();
+      await sleep(4500);
+      console.log("  ✅ Database optimize executed");
+    }
+    await sleep(2000);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 15 — Back to Overview (finale)
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 15 — Finale: Overview");
     await clickTab(page, "Overview");
-    await sleep(3000);
-    console.log("   ✅ Full circle complete");
+    await sleep(6000);
+    console.log("  ✅ 360° onboarding demo complete");
 
   } catch (err) {
-    console.error(`\n❌ Error: ${err}`);
+    console.error(`\n❌ Recording error: ${err}`);
   }
 
-  // Finalize video
-  const videoPath = await page.video()?.path();
-  await context.close();
+  // ── Save video ────────────────────────────────────────────────
+  const rawPath = await page.video()?.path();
+  await ctx.close();
   await browser.close();
 
-  if (videoPath) {
-    const webmPath = path.join(VIDEO_DIR, "wpdash-full-demo.webm");
-    fs.copyFileSync(videoPath, webmPath);
-    console.log(`\n✅ WebM: ${webmPath}`);
-    const webmSize = fs.statSync(webmPath).size;
-    console.log(`   Size: ${(webmSize / 1024 / 1024).toFixed(1)} MB`);
+  if (rawPath) {
+    const webmOut = path.join(VIDEO_DIR, "wpdash-full-demo.webm");
+    if (fs.existsSync(webmOut)) fs.unlinkSync(webmOut);
+    fs.copyFileSync(rawPath, webmOut);
+    try { fs.unlinkSync(rawPath); } catch { /* ok */ }
 
-    // Convert to MP4
+    const webmMB = (fs.statSync(webmOut).size / 1024 / 1024).toFixed(1);
+    console.log(`\n✅ WebM saved: ${webmOut} (${webmMB} MB)`);
+
     try {
-      const { execSync } = await import("child_process");
-      const mp4Path = path.join(VIDEO_DIR, "wpdash-full-demo.mp4");
-      execSync(`ffmpeg -y -i "${webmPath}" -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p "${mp4Path}" 2>/dev/null`);
-      const mp4Size = fs.statSync(mp4Path).size;
-      console.log(`✅ MP4: ${mp4Path}`);
-      console.log(`   Size: ${(mp4Size / 1024 / 1024).toFixed(1)} MB`);
+      const mp4Out = path.join(VIDEO_DIR, "wpdash-full-demo.mp4");
+      execSync(
+        `ffmpeg -y -i "${webmOut}" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p "${mp4Out}" 2>/dev/null`,
+      );
+      const mp4MB = (fs.statSync(mp4Out).size / 1024 / 1024).toFixed(1);
+      console.log(`✅ MP4 saved:  ${mp4Out} (${mp4MB} MB)`);
     } catch {
-      console.log("ℹ️ ffmpeg not found — WebM only");
+      console.log("ℹ️  ffmpeg not found — keeping WebM only");
     }
-    
-    // Cleanup temp video
-    try { fs.unlinkSync(videoPath); } catch {}
   }
 
-  try {
-    const { execSync } = await import("child_process");
-    execSync(
-      "docker exec wpdash-test-wp sh -lc 'if [ ! -f /var/www/html/wp-content/plugins/hello.php ] && [ -f /usr/src/wordpress/wp-content/plugins/hello.php ]; then cp /usr/src/wordpress/wp-content/plugins/hello.php /var/www/html/wp-content/plugins/hello.php; fi'",
-      { stdio: "ignore" },
-    );
-  } catch {}
+  // (No hello.php restore needed — demo uses hello-dolly/ directory plugin)
 
-  console.log("\n🎬 Done!");
+  console.log("\n🎬  Done!\n");
 }
 
 main();

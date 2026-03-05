@@ -16,9 +16,14 @@ import SecurityWidget from "@/components/security/SecurityWidget";
 import PluginsList from "@/components/plugins/PluginsList";
 import SeoWidget from "@/components/seo/SeoWidget";
 import SeoDetails from "@/components/seo/SeoDetails";
+import ThemesList from "@/components/themes/ThemesList";
+import UsersList from "@/components/users/UsersList";
+import ContentList from "@/components/content/ContentList";
+import WooCommerceHub from "@/components/woocommerce/WooCommerceHub";
+import DatabaseManager from "@/components/database/DatabaseManager";
 import { cn } from "@/lib/cn";
 
-const tabs = ["Overview", "Uptime", "Security", "Plugins", "SEO", "Logs", "Backup"] as const;
+const tabs = ["Overview", "Uptime", "Security", "Plugins", "SEO", "Logs", "Backup", "Themes", "Users", "Content", "WooCommerce", "Database"] as const;
 
 function statusBadgeColor(status: string): "success" | "error" | "light" {
   if (status === "online") return "success";
@@ -150,7 +155,7 @@ export default function SiteDetailClient({ site }: { site: Site }) {
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         {activeTab === "Overview" ? (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Site Health</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Site Health</h3>
             {healthLoading ? (
               <p className="text-sm text-gray-500">Fetching health data from WordPress…</p>
             ) : healthData.wpVersion ? (
@@ -200,6 +205,16 @@ export default function SiteDetailClient({ site }: { site: Site }) {
             <BackupWidget siteId={site.id} />
             <BackupHistory siteId={site.id} />
           </div>
+        ) : activeTab === "Themes" ? (
+          <ThemesList siteId={site.id} />
+        ) : activeTab === "Users" ? (
+          <UsersList siteId={site.id} />
+        ) : activeTab === "Content" ? (
+          <ContentList siteId={site.id} />
+        ) : activeTab === "WooCommerce" ? (
+          <WooCommerceHub siteId={site.id} />
+        ) : activeTab === "Database" ? (
+          <DatabaseManager siteId={site.id} />
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">

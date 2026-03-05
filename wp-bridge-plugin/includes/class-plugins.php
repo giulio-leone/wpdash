@@ -188,10 +188,26 @@ class WPDash_Plugins {
         $source = $request->get_param('source');
         $value  = $request->get_param('value');
 
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
         require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
         require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
 
+        if (!WP_Filesystem()) {
+            return new WP_Error('filesystem_error', 'Could not initialize filesystem', ['status' => 500]);
+        }
+
         if ($source === 'slug') {
+            // If the plugin directory already exists, return success immediately (no download needed)
+            $plugin_dir = WP_PLUGIN_DIR . '/' . sanitize_file_name($value);
+            if (is_dir($plugin_dir)) {
+                return new WP_REST_Response([
+                    'message' => 'Plugin installed',
+                    'source'  => $source,
+                    'value'   => $value,
+                ], 201);
+            }
+
             $api = plugins_api('plugin_information', [
                 'slug'   => $value,
                 'fields' => ['sections' => false],
@@ -208,6 +224,14 @@ class WPDash_Plugins {
         $result   = $upgrader->install($download_url);
 
         if (is_wp_error($result)) {
+            // Treat "folder already exists" as success (plugin was already present)
+            if ($result->get_error_code() === 'folder_exists') {
+                return new WP_REST_Response([
+                    'message' => 'Plugin installed',
+                    'source'  => $source,
+                    'value'   => $value,
+                ], 201);
+            }
             return $result;
         }
 
@@ -230,7 +254,13 @@ class WPDash_Plugins {
             return new WP_REST_Response(['message' => 'Plugin is already up to date', 'plugin' => $plugin], 200);
         }
 
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
         require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+
+        if (!WP_Filesystem()) {
+            return new WP_Error('filesystem_error', 'Could not initialize filesystem', ['status' => 500]);
+        }
 
         $upgrader = new Plugin_Upgrader(new Automatic_Upgrader_Skin());
         $result   = $upgrader->upgrade($plugin);

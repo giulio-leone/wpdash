@@ -30,15 +30,15 @@ export default function BackupHistory({ siteId }: BackupHistoryProps) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Backup History</h3>
+      <h3 className="text-base font-semibold text-gray-900 dark:text-white">Backup History</h3>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="px-3 py-2 font-medium text-gray-500 dark:text-gray-400">Date</th>
-              <th className="px-3 py-2 font-medium text-gray-500 dark:text-gray-400">Size</th>
-              <th className="px-3 py-2 font-medium text-gray-500 dark:text-gray-400">Status</th>
+            <tr className="border-b border-gray-200 dark:border-gray-800">
+              <th className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Date</th>
+              <th className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Size</th>
+              <th className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</th>
             </tr>
           </thead>
           <tbody>

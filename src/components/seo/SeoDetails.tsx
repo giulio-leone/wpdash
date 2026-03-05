@@ -188,7 +188,7 @@ export default function SeoDetails({ siteId, refreshKey }: Props) {
           {recommendations.map((rec, i) => (
             <div
               key={i}
-              className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+              className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-800"
             >
               <Badge size="sm" color={rec.severity}>
                 {rec.label}
@@ -206,7 +206,7 @@ export default function SeoDetails({ siteId, refreshKey }: Props) {
             {history.slice(0, 10).map((h) => (
               <div
                 key={h.id}
-                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-800"
               >
                 <div>
                   <p className="text-sm text-gray-900 dark:text-white">{h.pageUrl}</p>
@@ -235,7 +235,7 @@ function Section({
 }) {
   return (
     <div>
-      <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">{title}</h4>
+      <h4 className="mb-2 text-base font-semibold text-gray-900 dark:text-white">{title}</h4>
       {children}
     </div>
   );

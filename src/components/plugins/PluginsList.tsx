@@ -1,75 +1,44 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/cn";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
-import {
-  getSitePlugins,
-  syncSitePlugins,
-  activatePlugin,
-  deactivatePlugin,
-  updatePlugin,
-  deletePlugin,
-} from "@/application/plugin/plugin-actions";
 import PluginInstallModal from "./PluginInstallModal";
 import BulkUpdatePanel from "./BulkUpdatePanel";
+import { usePluginsStore } from "@/stores/plugins-store";
 import type { SitePlugin } from "@/domain/plugin/entity";
+
+// Stable empty array — prevents infinite re-render when siteId not yet in store
+const EMPTY_PLUGINS: SitePlugin[] = [];
 
 interface Props {
   siteId: string;
 }
 
 export default function PluginsList({ siteId }: Props) {
-  const [plugins, setPlugins] = useState<SitePlugin[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState("");
   const [showInstall, setShowInstall] = useState(false);
   const [bulkSlug, setBulkSlug] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchPlugins = useCallback(async () => {
-    setLoading(true);
-    const result = await getSitePlugins(siteId);
-    if (result.success) setPlugins(result.data);
-    else setError(result.error);
-    setLoading(false);
-  }, [siteId]);
+  const plugins = usePluginsStore((s) => s.plugins[siteId] ?? EMPTY_PLUGINS);
+  const loading = usePluginsStore((s) => s.loading[siteId] ?? false);
+  const syncing = usePluginsStore((s) => s.syncing[siteId] ?? false);
+  const actionLoading = usePluginsStore((s) => s.actionLoading[siteId] ?? null);
+  const error = usePluginsStore((s) => s.error[siteId] ?? null);
+  const fetchPlugins = usePluginsStore((s) => s.fetchPlugins);
+  const syncPlugins = usePluginsStore((s) => s.syncPlugins);
+  const runAction = usePluginsStore((s) => s.runAction);
+  const subscribeToRealtime = usePluginsStore((s) => s.subscribeToRealtime);
 
   useEffect(() => {
-    const controller = new AbortController();
-    fetchPlugins();
-    return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteId]);
+    void fetchPlugins(siteId);
+  }, [siteId, fetchPlugins]);
 
-  const handleSync = async () => {
-    setSyncing(true);
-    setError(null);
-    const result = await syncSitePlugins(siteId);
-    if (result.success) setPlugins(result.data);
-    else setError(result.error);
-    setSyncing(false);
-  };
-
-  const handleAction = async (
-    action: "activate" | "deactivate" | "update" | "delete",
-    slug: string,
-  ) => {
-    setActionLoading(slug);
-    setError(null);
-    let result;
-    if (action === "activate") result = await activatePlugin(siteId, slug);
-    else if (action === "deactivate") result = await deactivatePlugin(siteId, slug);
-    else if (action === "update") result = await updatePlugin(siteId, slug);
-    else result = await deletePlugin(siteId, slug);
-
-    if (!result.success) setError(result.error);
-    else await fetchPlugins();
-    setActionLoading(null);
-  };
+  useEffect(() => {
+    const unsubscribe = subscribeToRealtime(siteId);
+    return unsubscribe;
+  }, [siteId, subscribeToRealtime]);
 
   const filtered = plugins.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()),
@@ -94,13 +63,13 @@ export default function PluginsList({ siteId }: Props) {
           onChange={(e) => setSearch(e.target.value)}
           className={cn(
             "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm",
-            "dark:border-gray-700 dark:bg-gray-800 dark:text-white",
+            "dark:border-gray-800 dark:bg-gray-900 dark:text-white",
             "focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500",
             "sm:max-w-[16rem]",
           )}
         />
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={handleSync} disabled={syncing}>
+          <Button size="sm" variant="outline" onClick={() => syncPlugins(siteId)} disabled={syncing}>
             {syncing ? "Syncing…" : "Sync Plugins"}
           </Button>
           <Button size="sm" variant="primary" onClick={() => setShowInstall(true)}>
@@ -126,12 +95,12 @@ export default function PluginsList({ siteId }: Props) {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="pb-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Name</th>
-                <th className="pb-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Version</th>
-                <th className="pb-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Status</th>
-                <th className="pb-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Update</th>
-                <th className="pb-3 font-medium text-gray-500 dark:text-gray-400">Actions</th>
+              <tr className="border-b border-gray-200 dark:border-gray-800">
+                <th className="pb-3 pr-4 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Name</th>
+                <th className="pb-3 pr-4 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Version</th>
+                <th className="pb-3 pr-4 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</th>
+                <th className="pb-3 pr-4 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Update</th>
+                <th className="pb-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -171,7 +140,7 @@ export default function PluginsList({ siteId }: Props) {
                           size="sm"
                           variant="outline"
                           disabled={actionLoading === plugin.slug}
-                          onClick={() => handleAction("deactivate", plugin.slug)}
+                          onClick={() => runAction(siteId, "deactivate", plugin.slug)}
                         >
                           Deactivate
                         </Button>
@@ -180,7 +149,7 @@ export default function PluginsList({ siteId }: Props) {
                           size="sm"
                           variant="outline"
                           disabled={actionLoading === plugin.slug}
-                          onClick={() => handleAction("activate", plugin.slug)}
+                          onClick={() => runAction(siteId, "activate", plugin.slug)}
                         >
                           Activate
                         </Button>
@@ -189,7 +158,7 @@ export default function PluginsList({ siteId }: Props) {
                         size="sm"
                         variant="primary"
                         disabled={actionLoading === plugin.slug}
-                        onClick={() => handleAction("update", plugin.slug)}
+                        onClick={() => runAction(siteId, "update", plugin.slug)}
                       >
                         Update
                       </Button>
@@ -207,7 +176,7 @@ export default function PluginsList({ siteId }: Props) {
                               `Delete plugin "${plugin.name}"? This action cannot be undone.`,
                             )
                           ) {
-                            void handleAction("delete", plugin.slug);
+                            void runAction(siteId, "delete", plugin.slug);
                           }
                         }}
                       >
@@ -240,7 +209,7 @@ export default function PluginsList({ siteId }: Props) {
           onClose={() => setShowInstall(false)}
           onInstalled={() => {
             setShowInstall(false);
-            void fetchPlugins();
+            void fetchPlugins(siteId);
           }}
         />
       )}
