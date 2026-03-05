@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { db } from "@/infrastructure/database/drizzle-client";
 import { notifications } from "@/infrastructure/database/schemas/notifications";
 import { eq, and, gte, desc } from "drizzle-orm";
+import { sendSiteOfflineAlert } from "@/application/notifications/email-service";
 
 export async function getNotifications() {
   const supabase = await createSupabaseServerClient();
@@ -67,9 +68,12 @@ export async function maybeNotifyOffline(
   userId: string,
   siteId: string,
   siteName: string,
+  siteUrl?: string,
 ): Promise<void> {
   if (await alreadyNotifiedToday(userId, siteId, "site_offline")) return;
   await createNotification({ userId, type: "site_offline", siteId, siteName, message: `${siteName} is offline` });
+  // Also send email alert (fire-and-forget)
+  sendSiteOfflineAlert(userId, { name: siteName, url: siteUrl ?? "" }).catch(() => {});
 }
 
 export async function maybeNotifyUpdates(

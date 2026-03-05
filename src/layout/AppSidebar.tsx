@@ -16,6 +16,7 @@ import {
   BoltIcon,
   BoxCubeIcon,
   GroupIcon,
+  DollarLineIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
 
@@ -71,6 +72,11 @@ const navItems: NavItem[] = [
     icon: <GroupIcon />,
     name: "Organizations",
     path: "/organizations",
+  },
+  {
+    icon: <DollarLineIcon />,
+    name: "Billing",
+    path: "/billing",
   },
 ];
 

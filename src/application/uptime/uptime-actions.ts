@@ -72,7 +72,7 @@ export async function checkSiteUptime(
   });
 
   if (!isReachable) {
-    await maybeNotifyOffline(userId, siteId, site.name).catch(() => {});
+    await maybeNotifyOffline(userId, siteId, site.name, site.url).catch(() => {});
   }
 
   return { success: true, data: check };

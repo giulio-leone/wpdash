@@ -42,6 +42,8 @@
     "react-apexcharts": "latest",
     "react-dom": "latest",
     "react-dropzone": "latest",
+    "resend": "^6.9.3",
+    "stripe": "^20.4.0",
     "tailwind-merge": "latest",
     "zod": "latest",
     "zustand": "^5.0.11"
