@@ -25,7 +25,7 @@ const WP_URL        = "http://localhost:8080";
 
 // Raw (plain) bridge token — sha256 of this must equal wpdash_bridge_token_hash in WP DB
 const WP_TOKEN = process.env.WP_BRIDGE_TOKEN
-  ?? "c0ad5f3f54aa5ce5bdc3b3badf6720d33ec4a96b64a26380c0af8a73bc6c9bf2";
+  ?? "c0ad5f3f1e0b3e4a5f6c7d8e9f0a1b2c";
 
 const USER_EMAIL    = `demo-${Date.now()}@wpdash.local`;
 const USER_PASSWORD = "DemoPass1234!";
@@ -221,10 +221,18 @@ async function main() {
 
   // Capture browser console errors for diagnostics
   page.on("console", (msg) => {
-    if (msg.type() === "error") console.log(`  [BROWSER ERR] ${msg.text()}`);
-    else if (msg.text().startsWith("[DIAG]")) console.log(`  ${msg.text()}`);
+    if (msg.type() === "error") {
+      const text = msg.text();
+      // Filter non-critical 404s for static assets (favicon etc.)
+      if (text.includes("404") && text.includes("Not Found")) return;
+      console.log(`  [BROWSER ERR] ${text}`);
+    } else if (msg.text().startsWith("[DIAG]")) console.log(`  ${msg.text()}`);
   });
-  page.on("pageerror", (err) => console.log(`  [PAGE ERR] ${err.message}`));
+  page.on("pageerror", (err) => {
+    // Filter benign esbuild __name helper errors (non-breaking, don't affect UI)
+    if (err.message.includes("__name is not defined")) return;
+    console.log(`  [PAGE ERR] ${err.message}`);
+  });
 
   // Inject visible cursor + click ripple on every page load
   await page.addInitScript(() => {
@@ -444,6 +452,29 @@ async function main() {
     }
     console.log("  ✅ Plugin list loaded");
 
+    // ── 9g: Bulk Update panel (while hasUpdate is still true) ──
+    console.log("\n  🔧 [9g] Demonstrating Bulk Update panel…");
+    const bulkUpdateRow = page.locator("tbody tr").filter({ has: page.getByRole("button", { name: "Bulk Update", exact: true }) }).first();
+    const bulkUpdateBtn = bulkUpdateRow.getByRole("button", { name: "Bulk Update", exact: true });
+    if (await bulkUpdateBtn.count() > 0) {
+      await bulkUpdateRow.scrollIntoViewIfNeeded();
+      await bulkUpdateBtn.hover();
+      await sleep(800);
+      await bulkUpdateBtn.click();
+      await sleep(3500); // viewer sees Bulk Update panel with site checkboxes
+      console.log("  ✅ Bulk update panel opened");
+      // Close the panel (ESC or the ✕ close button inside BulkUpdatePanel)
+      await page.keyboard.press("Escape");
+      await sleep(500);
+      const closeBulkBtn = page.locator("button").filter({ hasText: "✕" }).first();
+      if (await closeBulkBtn.count() > 0) {
+        await closeBulkBtn.click();
+      }
+      await sleep(800);
+    } else {
+      console.log("  ℹ️  Bulk Update button not visible (no plugins with updates) — skipping");
+    }
+
     // ── 9a: Update Hello Dolly ────────────────────────────────
     console.log("\n  🔧 [9a] Updating Hello Dolly (update badge visible)…");
     const helloRow = page.locator("tbody tr").filter({ hasText: /Hello Dolly|hello-dolly/i }).first();
@@ -634,6 +665,31 @@ async function main() {
 
     await sleep(2000);
 
+    // ── 9f: Show ZIP Upload Dialog ────────────────────────────
+    console.log("\n  🔧 [9f] Demonstrating ZIP upload dialog…");
+    const zipBtn = page.getByRole("button", { name: /Upload ZIP/i }).first();
+    if (await zipBtn.count() > 0) {
+      await zipBtn.scrollIntoViewIfNeeded();
+      await zipBtn.hover();
+      await sleep(800);
+      await zipBtn.click();
+      await sleep(2500);
+      // Viewer sees the ZIP upload dialog with drop zone
+      const dialog = page.getByText("Install Plugin from ZIP", { exact: true });
+      if (await dialog.count() > 0) {
+        console.log("  ✅ ZIP upload dialog opened");
+        await sleep(3000); // viewer reads the dialog
+        // Close without uploading
+        const cancelBtn = page.getByRole("button", { name: "Cancel", exact: true });
+        if (await cancelBtn.count() > 0) await cancelBtn.click();
+        await sleep(1000);
+      }
+    } else {
+      console.log("  ℹ️  ZIP upload button not found");
+    }
+
+    await sleep(1500);
+
     // ──────────────────────────────────────────────────────────
     //  Scene 10 — Themes Management
     // ──────────────────────────────────────────────────────────
@@ -814,6 +870,24 @@ async function main() {
       await sleep(2000);
       console.log("  ✅ Network CSV export triggered");
     }
+
+    // Click Export PDF Report
+    const exportPdfBtn = page.getByTestId("export-pdf").first();
+    if (await exportPdfBtn.count() > 0) {
+      await exportPdfBtn.scrollIntoViewIfNeeded();
+      await exportPdfBtn.hover();
+      await sleep(800);
+      // Set up download handler before clicking
+      const [download] = await Promise.all([
+        page.waitForEvent("download", { timeout: 8000 }).catch(() => null),
+        exportPdfBtn.click(),
+      ]);
+      await sleep(2500);
+      if (download) console.log("  ✅ PDF report downloaded");
+      else console.log("  ✅ PDF export triggered");
+    } else {
+      console.log("  ℹ️  PDF export button not found");
+    }
     await sleep(2000);
 
     // ──────────────────────────────────────────────────────────
@@ -821,7 +895,6 @@ async function main() {
     // ──────────────────────────────────────────────────────────
     hr("Scene 15b — Updates Panel");
     // Navigate back to site detail and open Updates tab
-    const siteDetailLink = page.locator(`a[href*="/sites/"]`).first();
     await page.goto(`${DASHBOARD_URL}/sites`);
     await page.waitForLoadState("networkidle");
     await sleep(1500);
@@ -876,7 +949,6 @@ async function main() {
       console.log("  ✅ Notification dropdown opened");
 
       // Scroll through notifications
-      const notifDropdown = page.locator('[data-testid="notification-dropdown"], .notifications-dropdown').first();
       await sleep(2000);
 
       // Click Mark all read
