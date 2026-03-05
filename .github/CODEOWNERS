@@ -1,0 +1,27 @@
+# CODEOWNERS
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Each line defines an ownership rule: <file pattern> <owner(s)>
+# The last matching rule takes precedence.
+
+# Default: giulio-leone reviews everything
+* @giulio-leone
+
+# WordPress plugins
+/wp-bridge-plugin/  @giulio-leone
+/wp-wpdash-plugin/  @giulio-leone
+
+# Documentation
+/docs/              @giulio-leone
+/README.md          @giulio-leone
+/CHANGELOG.md       @giulio-leone
+
+# Security-sensitive files — require explicit review
+/SECURITY.md        @giulio-leone
+/.env.example       @giulio-leone
+/LICENSE            @giulio-leone
+
+# CI / GitHub configuration
+/.github/           @giulio-leone
+/Dockerfile         @giulio-leone
+/docker-compose*.yml @giulio-leone
