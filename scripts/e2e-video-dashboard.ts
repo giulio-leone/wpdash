@@ -1037,6 +1037,28 @@ async function main() {
     await sleep(1500);
 
     // ──────────────────────────────────────────────────────────
+    //  Scene 18d — Billing & Plans
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 18d — Billing & Plans");
+    await page.goto(`${DASHBOARD_URL}/billing`, { waitUntil: "domcontentloaded" });
+    await sleep(3000);
+    // Scroll to show plan cards
+    await page.evaluate(() => window.scrollBy({ top: 300, behavior: "smooth" }));
+    await sleep(1500);
+    await page.evaluate(() => window.scrollBy({ top: 400, behavior: "smooth" }));
+    await sleep(1500);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    await sleep(1500);
+    // Hover over Pro plan card
+    const proPlanCard = page.locator("text=Pro").first();
+    if (await proPlanCard.count() > 0) {
+      await proPlanCard.hover();
+      await sleep(1500);
+    }
+    console.log("  ✅ Billing page showcased");
+    await sleep(1500);
+
+    // ──────────────────────────────────────────────────────────
     //  Scene 18c — MCP / AI Integration
     // ──────────────────────────────────────────────────────────
     hr("Scene 18c — MCP / AI Integration");
