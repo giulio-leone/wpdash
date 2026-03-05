@@ -13,6 +13,8 @@ import {
   UserCircleIcon,
   DownloadIcon,
   BellIcon,
+  BoltIcon,
+  BoxCubeIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
 
@@ -53,6 +55,16 @@ const navItems: NavItem[] = [
     icon: <BellIcon />,
     name: "Alert Settings",
     path: "/settings",
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: "Connect Site",
+    path: "/connect",
+  },
+  {
+    icon: <BoltIcon />,
+    name: "MCP / AI",
+    path: "/mcp",
   },
 ];
 

@@ -1,0 +1,13 @@
+{
+  "name": "wp-wpdash",
+  "version": "1.0.0",
+  "description": "WP Dash – centralized WordPress management hub",
+  "scripts": {
+    "build": "wp-scripts build src/admin/index.js --output-path=build",
+    "start": "wp-scripts start src/admin/index.js --output-path=build",
+    "lint:js": "wp-scripts lint-js src"
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^30.0.0"
+  }
+}

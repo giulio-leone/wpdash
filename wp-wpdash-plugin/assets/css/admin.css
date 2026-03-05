@@ -1,0 +1,358 @@
+/* WP Dash – Admin styles
+ * Minimal overrides; WordPress admin styles handle the bulk of the UI.
+ */
+
+/* ── Root container ─────────────────────────────────────────────────── */
+#wp-dash-root {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 32px);
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+/* ── Layout shell ───────────────────────────────────────────────────── */
+.wp-dash-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.wp-dash-main {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background: #f0f0f1;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.wp-dash-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: #1d2327;
+    color: #fff;
+}
+
+.wp-dash-header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.wp-dash-header .version-badge {
+    font-size: 11px;
+    background: #2271b1;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
+.wp-dash-sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    background: #23282d;
+    padding: 16px 0;
+}
+
+.wp-dash-sidebar nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.wp-dash-sidebar nav ul li a,
+.wp-dash-sidebar nav ul li button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 20px;
+    color: #ccd0d4;
+    text-decoration: none;
+    font-size: 13px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, color 0.15s;
+    box-sizing: border-box;
+}
+
+.wp-dash-sidebar nav ul li button:hover,
+.wp-dash-sidebar nav ul li button.active {
+    background: #2271b1;
+    color: #fff;
+}
+
+.wp-dash-sidebar .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ── Screen titles ───────────────────────────────────────────────────── */
+.wp-dash-screen-header {
+    margin-bottom: 20px;
+}
+
+.wp-dash-screen-header h2 {
+    margin: 0 0 4px;
+    font-size: 22px;
+}
+
+.wp-dash-screen-header p {
+    margin: 0;
+    color: #646970;
+    font-size: 13px;
+}
+
+/* ── Summary cards ───────────────────────────────────────────────────── */
+.wp-dash-summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.wp-dash-stat-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 16px 20px;
+    text-align: center;
+}
+
+.wp-dash-stat-card .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1d2327;
+    line-height: 1;
+}
+
+.wp-dash-stat-card .stat-label {
+    font-size: 12px;
+    color: #646970;
+    margin-top: 6px;
+}
+
+.wp-dash-stat-card.has-issues .stat-value {
+    color: #d63638;
+}
+
+.wp-dash-stat-card.has-updates .stat-value {
+    color: #dba617;
+}
+
+/* ── Site cards (Dashboard) ──────────────────────────────────────────── */
+.wp-dash-sites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.wp-dash-site-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 16px;
+}
+
+.wp-dash-site-card .site-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.wp-dash-site-card .site-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.wp-dash-site-card .site-url {
+    font-size: 11px;
+    color: #646970;
+    word-break: break-all;
+    margin-bottom: 10px;
+}
+
+.wp-dash-site-card .site-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    color: #50575e;
+}
+
+.wp-dash-site-card .site-meta span {
+    background: #f0f0f1;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* ── Status badges ───────────────────────────────────────────────────── */
+.wp-dash-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.wp-dash-badge.online   { background: #edfaef; color: #1a7f37; }
+.wp-dash-badge.offline  { background: #fce8e8; color: #d63638; }
+.wp-dash-badge.warning  { background: #fef8ee; color: #dba617; }
+.wp-dash-badge.active   { background: #edfaef; color: #1a7f37; }
+.wp-dash-badge.inactive { background: #f0f0f1; color: #646970; }
+.wp-dash-badge.clean    { background: #edfaef; color: #1a7f37; }
+.wp-dash-badge.issues   { background: #fce8e8; color: #d63638; }
+
+/* ── Tables ──────────────────────────────────────────────────────────── */
+.wp-dash-table-wrap {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.wp-dash-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.wp-dash-table th {
+    background: #f0f0f1;
+    padding: 10px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #1d2327;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.wp-dash-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #f0f0f1;
+    vertical-align: middle;
+}
+
+.wp-dash-table tr:last-child td {
+    border-bottom: none;
+}
+
+.wp-dash-table tr:hover td {
+    background: #f9f9f9;
+}
+
+.wp-dash-table .actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* ── Loading / error states ──────────────────────────────────────────── */
+.wp-dash-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px;
+    color: #646970;
+    font-size: 14px;
+}
+
+.wp-dash-error {
+    padding: 16px;
+    background: #fce8e8;
+    border-left: 4px solid #d63638;
+    color: #d63638;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 16px;
+}
+
+.wp-dash-empty {
+    padding: 48px;
+    text-align: center;
+    color: #646970;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+}
+
+/* ── Add site form ───────────────────────────────────────────────────── */
+.wp-dash-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+.wp-dash-card h3 {
+    margin: 0 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+    border-bottom: 1px solid #f0f0f1;
+    padding-bottom: 10px;
+}
+
+.wp-dash-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: end;
+}
+
+/* ── Security file list ──────────────────────────────────────────────── */
+.wp-dash-file-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.wp-dash-file-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: monospace;
+    border-bottom: 1px solid #f0f0f1;
+    color: #1d2327;
+}
+
+.wp-dash-file-list li:last-child {
+    border-bottom: none;
+}
+
+.wp-dash-file-list .dashicons {
+    color: #d63638;
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* ── Responsive tweaks ───────────────────────────────────────────────── */
+@media (max-width: 782px) {
+    .wp-dash-sidebar {
+        width: 100%;
+    }
+
+    .wp-dash-layout {
+        flex-direction: column;
+    }
+
+    .wp-dash-summary-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
