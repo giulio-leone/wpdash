@@ -6,6 +6,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import PluginInstallModal from "./PluginInstallModal";
 import BulkUpdatePanel from "./BulkUpdatePanel";
+import ZipUploadDialog from "./ZipUploadDialog";
 import { usePluginsStore } from "@/stores/plugins-store";
 import { SkeletonTable } from "@/components/ui/skeleton/Skeleton";
 import type { SitePlugin } from "@/domain/plugin/entity";
@@ -20,6 +21,7 @@ interface Props {
 export default function PluginsList({ siteId }: Props) {
   const [search, setSearch] = useState("");
   const [showInstall, setShowInstall] = useState(false);
+  const [showZipUpload, setShowZipUpload] = useState(false);
   const [bulkSlug, setBulkSlug] = useState<string | null>(null);
 
   const plugins = usePluginsStore((s) => s.plugins[siteId] ?? EMPTY_PLUGINS);
@@ -79,6 +81,9 @@ export default function PluginsList({ siteId }: Props) {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => syncPlugins(siteId)} disabled={syncing}>
             {syncing ? "Syncing…" : "Sync Plugins"}
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setShowZipUpload(true)}>
+            📦 Upload ZIP
           </Button>
           <Button size="sm" variant="primary" onClick={() => setShowInstall(true)}>
             Install Plugin
@@ -219,6 +224,14 @@ export default function PluginsList({ siteId }: Props) {
             setShowInstall(false);
             void fetchPlugins(siteId);
           }}
+        />
+      )}
+
+      {showZipUpload && (
+        <ZipUploadDialog
+          siteId={siteId}
+          onClose={() => setShowZipUpload(false)}
+          onSuccess={() => { void fetchPlugins(siteId); }}
         />
       )}
 

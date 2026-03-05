@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getSites } from "@/application/site/site-actions";
+import { PlusIcon, BoltIcon, PieChartIcon, DocsIcon, GridIcon, PlugInIcon, LockIcon } from "@/icons";
 
 type CommandItem = {
   id: string;
   label: string;
   description?: string;
-  icon: string;
+  icon: React.ReactNode;
   category: string;
   action: () => void;
 };
@@ -81,7 +82,7 @@ export default function CommandPalette() {
       id: "add-site",
       label: "Add new site",
       description: "Connect a WordPress site",
-      icon: "➕",
+      icon: <PlusIcon className="w-4 h-4" />,
       category: "Actions",
       action: () => router.push("/sites?add=true"),
     },
@@ -89,7 +90,7 @@ export default function CommandPalette() {
       id: "network-updates",
       label: "Network Updates",
       description: "View pending updates across all sites",
-      icon: "🔄",
+      icon: <BoltIcon className="w-4 h-4 text-yellow-500" />,
       category: "Actions",
       action: () => router.push("/updates"),
     },
@@ -97,7 +98,7 @@ export default function CommandPalette() {
       id: "reports",
       label: "Reports",
       description: "View network health report",
-      icon: "📊",
+      icon: <PieChartIcon className="w-4 h-4 text-brand-500" />,
       category: "Actions",
       action: () => router.push("/reports"),
     },
@@ -105,7 +106,7 @@ export default function CommandPalette() {
       id: "settings",
       label: "Alert Settings",
       description: "Configure notification preferences",
-      icon: "⚙️",
+      icon: <DocsIcon className="w-4 h-4 text-gray-500" />,
       category: "Actions",
       action: () => router.push("/settings"),
     },
@@ -116,7 +117,7 @@ export default function CommandPalette() {
       id: `site-${s.id}`,
       label: s.name,
       description: s.url,
-      icon: "🌐",
+      icon: <GridIcon className="w-4 h-4 text-gray-500" />,
       category: "Sites",
       action: () => router.push(`/sites/${s.id}`),
     },
@@ -124,7 +125,7 @@ export default function CommandPalette() {
       id: `site-plugins-${s.id}`,
       label: `Plugins — ${s.name}`,
       description: "Manage plugins for this site",
-      icon: "🔌",
+      icon: <PlugInIcon className="w-4 h-4 text-gray-500" />,
       category: "Sites",
       action: () => router.push(`/sites/${s.id}?tab=Plugins`),
     },
@@ -132,7 +133,7 @@ export default function CommandPalette() {
       id: `site-security-${s.id}`,
       label: `Security — ${s.name}`,
       description: "Security audit for this site",
-      icon: "🔒",
+      icon: <LockIcon className="w-4 h-4 text-gray-500" />,
       category: "Sites",
       action: () => router.push(`/sites/${s.id}?tab=Security`),
     },
@@ -249,7 +250,7 @@ export default function CommandPalette() {
                         : "hover:bg-gray-50 dark:hover:bg-white/[0.03]"
                     }`}
                   >
-                    <span className="w-6 shrink-0 text-center text-lg">{item.icon}</span>
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center">{item.icon}</span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-gray-800 dark:text-white">
                         {item.label}

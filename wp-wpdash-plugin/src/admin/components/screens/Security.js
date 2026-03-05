@@ -219,7 +219,7 @@ export default function Security( { sites: sitesProp } ) {
 
 							{ ! audit && (
 								<p style={ { color: '#646970' } }>
-									No audit data yet. Select a site and click "Run New Audit".
+									No audit data yet. Select a site and click &quot;Run New Audit&quot;.
 								</p>
 							) }
 						</div>

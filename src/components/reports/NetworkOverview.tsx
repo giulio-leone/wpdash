@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/cn";
 import type { NetworkOverview as NetworkOverviewData } from "@/application/report/report-actions";
 import type { SiteReport } from "@/application/report/report-actions";
@@ -26,34 +26,11 @@ function healthBg(score: number): string {
 }
 
 export default function NetworkOverview({ overview, sites }: Props) {
-  const [siteReports, setSiteReports] = useState<Record<string, SiteReport>>(
-    {},
+  // Use pre-built reports from server (overview.siteReports) — no client re-fetch
+  const [siteReports] = useState<Record<string, SiteReport>>(
+    overview?.siteReports ?? {},
   );
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadReports() {
-      try {
-        const { getSiteReport } = await import(
-          "@/application/report/report-actions"
-        );
-        const results = await Promise.all(
-          sites.map(async (site) => {
-            const result = await getSiteReport(site.id);
-            return { id: site.id, report: result.success ? result.data : null };
-          }),
-        );
-        const map: Record<string, SiteReport> = {};
-        for (const r of results) {
-          if (r.report) map[r.id] = r.report;
-        }
-        setSiteReports(map);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadReports();
-  }, [sites]);
+  const loading = false;
 
   if (!overview) {
     return (

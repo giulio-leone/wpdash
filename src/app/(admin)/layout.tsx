@@ -5,8 +5,10 @@ import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import { ToastContainer } from "@/components/ui/toast/ToastContainer";
-import CommandPalette from "@/components/ui/command-palette/CommandPalette";
+import dynamic from "next/dynamic";
 import React from "react";
+
+const CommandPalette = dynamic(() => import("@/components/ui/command-palette/CommandPalette"), { ssr: false });
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();

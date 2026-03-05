@@ -1,8 +1,9 @@
 "use server";
 
+import type { ActionResult } from "@/lib/server-auth";
+
 import { getCurrentUserId } from "@/lib/server-auth";
 
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import { DrizzleLogRepository } from "@/infrastructure/database/repositories/log-repository-impl";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
@@ -14,9 +15,6 @@ import { eq } from "drizzle-orm";
 import type { FindSiteLogOptions, SeverityCount } from "@/ports/repositories/site-log-repository";
 import type { SiteLog } from "@/domain/log/entity";
 
-type ActionResult<T = void> =
-  | { success: true; data: T }
-  | { success: false; error: string };
 
 const siteRepo = new DrizzleSiteRepository();
 const logRepo = new DrizzleLogRepository();

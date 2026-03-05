@@ -1,9 +1,10 @@
 "use server";
 
+import type { ActionResult } from "@/lib/server-auth";
+
 import { getCurrentUserId } from "@/lib/server-auth";
 
 import { eq, and } from "drizzle-orm";
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSeoRepository } from "@/infrastructure/database/repositories/seo-repository-impl";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
 import { db } from "@/infrastructure/database/drizzle-client";
@@ -17,9 +18,6 @@ import {
 import type { SeoAudit } from "@/domain/seo/entity";
 import type { BridgeSeoAuditResponse } from "@/infrastructure/wp-bridge/types";
 
-type ActionResult<T = void> =
-  | { success: true; data: T }
-  | { success: false; error: string };
 
 const repo = new DrizzleSeoRepository();
 const bridge = new WPBridgeClient();

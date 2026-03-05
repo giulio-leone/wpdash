@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import { createSite } from "@/application/site/site-actions";
+import { AlertIcon } from "@/icons";
 
 interface AddSiteModalProps {
   isOpen: boolean;
@@ -74,9 +75,10 @@ export default function AddSiteModal({ isOpen, onClose, onSiteAdded }: AddSiteMo
               {copied ? "Copied!" : "Copy"}
             </button>
           </div>
-          <div className="rounded-lg border border-warning-200 bg-warning-50 p-3 text-xs text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-400">
-            ⚠️ Save this token securely. You will need it to connect your WordPress plugin.
-          </div>
+            <div className="flex items-start gap-2 rounded-lg border border-warning-200 bg-warning-50 p-3 text-xs text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-400">
+              <AlertIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              Save this token securely. You will need it to connect your WordPress plugin.
+            </div>
           <div className="mt-6 flex justify-end">
             <Button onClick={handleClose}>Done</Button>
           </div>

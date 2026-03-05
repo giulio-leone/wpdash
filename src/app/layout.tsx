@@ -4,6 +4,7 @@ import "flatpickr/dist/flatpickr.css";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import type { Metadata } from "next";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,6 +23,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      {/* Load __name polyfill before Turbopack/esbuild-compiled dependency chunks execute */}
+      <Script src="/polyfill.js" strategy="beforeInteractive" />
       <body className={`${inter.className} dark:bg-gray-950`}>
         <ThemeProvider>
           <SidebarProvider>{children}</SidebarProvider>

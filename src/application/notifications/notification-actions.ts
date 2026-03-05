@@ -26,7 +26,7 @@ export async function markAllRead() {
   return { success: true as const };
 }
 
-export async function createNotification(params: {
+async function createNotification(params: {
   userId: string;
   type: "site_offline" | "update_available" | "backup_stale" | "info";
   siteId?: string;

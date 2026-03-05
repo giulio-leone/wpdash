@@ -1,7 +1,9 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import { createSite } from "@/application/site/site-actions";
 import { toast } from "@/hooks/useToast";
+import { BoltIcon, PlugInIcon, ArrowRightIcon, CheckCircleIcon } from "@/icons";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -42,8 +44,8 @@ export default function OnboardingWizard() {
 
       {step === 1 && (
         <div className="flex flex-col items-center gap-6 max-w-md text-center">
-          <div className="w-20 h-20 rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-4xl">
-            🚀
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-900/20">
+            <BoltIcon className="h-10 w-10 text-brand-500" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome to WP Dash!</h2>
           <p className="text-gray-500 dark:text-gray-400 text-lg">
@@ -60,8 +62,8 @@ export default function OnboardingWizard() {
 
       {step === 2 && (
         <div className="flex flex-col items-center gap-6 max-w-md text-center">
-          <div className="w-20 h-20 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-4xl">
-            🔌
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-900/20">
+            <PlugInIcon className="h-10 w-10 text-blue-500" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Install the Bridge Plugin</h2>
           <p className="text-gray-500 dark:text-gray-400">
@@ -93,8 +95,8 @@ export default function OnboardingWizard() {
 
       {step === 3 && (
         <div className="flex flex-col items-center gap-6 max-w-md w-full">
-          <div className="w-20 h-20 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-4xl">
-            🔗
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-green-50 dark:bg-green-900/20">
+            <ArrowRightIcon className="h-10 w-10 text-green-500" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center">Connect Your Site</h2>
           <form onSubmit={handleConnect} className="w-full space-y-4">
@@ -137,19 +139,19 @@ export default function OnboardingWizard() {
       {step === 4 && (
         <div className="flex flex-col items-center gap-6 max-w-md text-center">
           {/* CSS confetti */}
-          <div className="relative w-24 h-24 flex items-center justify-center">
-            <span className="text-6xl animate-bounce">🎉</span>
+          <div className="relative flex h-24 w-24 items-center justify-center">
+            <CheckCircleIcon className="h-16 w-16 animate-bounce text-green-500" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">You&apos;re all set!</h2>
           <p className="text-gray-500 dark:text-gray-400 text-lg">
             Your site is now connected and being monitored.
           </p>
-          <a
+          <Link
             href="/"
             className="mt-2 px-8 py-3 rounded-xl bg-brand-500 text-white font-semibold text-base hover:bg-brand-600 transition-colors"
           >
             Go to Dashboard
-          </a>
+          </Link>
         </div>
       )}
     </div>

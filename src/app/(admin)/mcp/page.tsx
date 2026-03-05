@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  GridIcon, PlugInIcon, PageIcon, UserIcon, DocsIcon,
+  DollarLineIcon, TableIcon, PieChartIcon, TimeIcon,
+} from "@/icons";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -11,7 +15,7 @@ interface Tool {
 
 interface Domain {
   label: string;
-  emoji: string;
+  icon: React.ReactNode;
   tools: Tool[];
 }
 
@@ -20,7 +24,7 @@ interface Domain {
 const DOMAINS: Domain[] = [
   {
     label: "Sites",
-    emoji: "🌐",
+    icon: <GridIcon className="w-5 h-5 text-brand-500" />,
     tools: [
       { name: "sites_list", description: "List all WordPress sites for the authenticated user." },
       { name: "sites_health", description: "Get health status for a specific WordPress site." },
@@ -28,7 +32,7 @@ const DOMAINS: Domain[] = [
   },
   {
     label: "Plugins",
-    emoji: "🔌",
+    icon: <PlugInIcon className="w-5 h-5 text-blue-500" />,
     tools: [
       { name: "plugins_list", description: "List all plugins on a WordPress site." },
       { name: "plugins_activate", description: "Activate a plugin on a WordPress site." },
@@ -40,7 +44,7 @@ const DOMAINS: Domain[] = [
   },
   {
     label: "Themes",
-    emoji: "🎨",
+    icon: <PageIcon className="w-5 h-5 text-purple-500" />,
     tools: [
       { name: "themes_list", description: "List all themes on a WordPress site." },
       { name: "themes_activate", description: "Activate a theme on a WordPress site." },
@@ -50,7 +54,7 @@ const DOMAINS: Domain[] = [
   },
   {
     label: "Users",
-    emoji: "👤",
+    icon: <UserIcon className="w-5 h-5 text-green-500" />,
     tools: [
       { name: "users_list", description: "List WordPress users on a site." },
       { name: "users_create", description: "Create a new WordPress user on a site." },
@@ -60,7 +64,7 @@ const DOMAINS: Domain[] = [
   },
   {
     label: "Content",
-    emoji: "📝",
+    icon: <DocsIcon className="w-5 h-5 text-orange-500" />,
     tools: [
       { name: "content_list_posts", description: "List posts on a WordPress site." },
       { name: "content_list_pages", description: "List pages on a WordPress site." },
@@ -69,7 +73,7 @@ const DOMAINS: Domain[] = [
   },
   {
     label: "WooCommerce",
-    emoji: "🛒",
+    icon: <DollarLineIcon className="w-5 h-5 text-emerald-500" />,
     tools: [
       { name: "woocommerce_stats", description: "Get WooCommerce revenue, orders, products, and customers stats." },
       { name: "woocommerce_list_orders", description: "List recent WooCommerce orders." },
@@ -79,7 +83,7 @@ const DOMAINS: Domain[] = [
   },
   {
     label: "Database",
-    emoji: "🗄️",
+    icon: <TableIcon className="w-5 h-5 text-gray-500" />,
     tools: [
       { name: "database_status", description: "Get database table sizes, total size, and DB version for a site." },
       { name: "database_optimize", description: "Run OPTIMIZE TABLE on all tables in the WordPress database." },
@@ -88,14 +92,14 @@ const DOMAINS: Domain[] = [
   },
   {
     label: "SEO",
-    emoji: "📊",
+    icon: <PieChartIcon className="w-5 h-5 text-brand-500" />,
     tools: [
       { name: "seo_audit", description: "Run an SEO audit on a WordPress site URL." },
     ],
   },
   {
     label: "Uptime",
-    emoji: "⏱️",
+    icon: <TimeIcon className="w-5 h-5 text-sky-500" />,
     tools: [
       { name: "uptime_history", description: "Get uptime check history for a site over the last N days." },
     ],
@@ -441,7 +445,7 @@ export default function McpPage() {
             >
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
-                  <span className="text-lg">{domain.emoji}</span>
+                  <span className="flex items-center justify-center text-lg">{domain.icon}</span>
                   {domain.label}
                 </h3>
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">

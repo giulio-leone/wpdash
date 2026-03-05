@@ -1,9 +1,10 @@
 "use server";
 
+import type { ActionResult } from "@/lib/server-auth";
+
 import { getCurrentUserId } from "@/lib/server-auth";
 
 import { eq, and } from "drizzle-orm";
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzlePluginRepository } from "@/infrastructure/database/repositories/plugin-repository-impl";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
 import { db } from "@/infrastructure/database/drizzle-client";
@@ -11,9 +12,6 @@ import { sites } from "@/infrastructure/database/schemas/sites";
 import type { SitePlugin } from "@/domain/plugin/entity";
 import type { BridgePluginInfo, BridgePluginInstallSource } from "@/infrastructure/wp-bridge/types";
 
-type ActionResult<T = void> =
-  | { success: true; data: T }
-  | { success: false; error: string };
 
 export interface BulkUpdateResult {
   siteId: string;
@@ -244,6 +242,33 @@ export async function installPlugin(
     return { success: true, data: undefined };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to install plugin";
+    return { success: false, error: message };
+  }
+}
+
+export async function installPluginFromZip(
+  siteId: string,
+  formData: FormData,
+): Promise<ActionResult> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { success: false, error: "Not authenticated" };
+
+  const conn = await getSiteConnection(siteId, userId);
+  if (!conn) return { success: false, error: "Site not found" };
+
+  const file = formData.get("file") as File | null;
+  if (!file) return { success: false, error: "No file provided" };
+  if (!file.name.endsWith(".zip")) return { success: false, error: "File must be a .zip archive" };
+
+  try {
+    const buffer = await file.arrayBuffer();
+    await bridge.installPluginFromZip(conn.url, conn.token, buffer, file.name);
+    const bridgePlugins = await bridge.getPlugins(conn.url, conn.token);
+    const mapped = bridgePlugins.map((bp) => mapBridgeToPlugin(siteId, bp));
+    await repo.syncPlugins(siteId, mapped);
+    return { success: true, data: undefined };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to install plugin from ZIP";
     return { success: false, error: message };
   }
 }

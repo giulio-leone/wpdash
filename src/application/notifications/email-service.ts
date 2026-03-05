@@ -30,12 +30,14 @@ async function getUserAlertPreferences(userId: string) {
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   if (!isResendConfigured) {
+    // eslint-disable-next-line no-console
     console.log(`[email] Would send "${subject}" to ${to} (Resend not configured)`);
     return;
   }
 
   const { error } = await resend.emails.send({ from: FROM_EMAIL, to, subject, html });
   if (error) {
+    // eslint-disable-next-line no-console
     console.error("[email] Failed to send:", error);
   }
 }

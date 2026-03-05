@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { createCheckoutSession, createBillingPortalSession } from "@/application/billing/billing-actions";
 import { PLANS, type PlanName } from "@/lib/stripe";
+import { ShootingStarIcon } from "@/icons";
 
 interface BillingInfo {
   plan: PlanName;
@@ -198,7 +199,7 @@ export default function BillingPageClient({ billingInfo }: Props) {
           }`}
         >
           <span className="mb-3 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-            {plan === "pro" ? "Current Plan" : "⭐ Most Popular"}
+            {plan === "pro" ? "Current Plan" : <><ShootingStarIcon className="inline w-3.5 h-3.5 mr-0.5 text-yellow-400" /> Most Popular</>}
           </span>
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">Pro</h3>
           <p className="mt-1 text-2xl font-extrabold text-gray-900 dark:text-white">

@@ -36,7 +36,7 @@ function EditSiteModal( { site, onSave, onCancel } ) {
 
 	return (
 		<div style={ { background: '#fff', border: '1px solid #dcdcde', borderRadius: 4, padding: 20, marginBottom: 12 } }>
-			<h4 style={ { margin: '0 0 12px' } }>Edit "{ site.name }"</h4>
+			<h4 style={ { margin: '0 0 12px' } }>Edit &quot;{ site.name }&quot;</h4>
 			{ error && <div className="wp-dash-error" style={ { marginBottom: 12 } }>{ error }</div> }
 			<form onSubmit={ handleSave }>
 				<TextControl label="Name" value={ name } onChange={ setName } />

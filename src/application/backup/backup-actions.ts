@@ -1,8 +1,9 @@
 "use server";
 
+import type { ActionResult } from "@/lib/server-auth";
+
 import { getCurrentUserId } from "@/lib/server-auth";
 
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import { DrizzleBackupRepository } from "@/infrastructure/database/repositories/backup-repository-impl";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
@@ -12,9 +13,6 @@ import { sites } from "@/infrastructure/database/schemas/sites";
 import { eq } from "drizzle-orm";
 import type { BackupRecord, BackupStatus } from "@/domain/backup/entity";
 
-type ActionResult<T = void> =
-  | { success: true; data: T }
-  | { success: false; error: string };
 
 const siteRepo = new DrizzleSiteRepository();
 const backupRepo = new DrizzleBackupRepository();

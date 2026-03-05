@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/cn";
 import Badge from "@/components/ui/badge/Badge";
+import { AlertIcon } from "@/icons";
 import {
   fetchWooStats,
   fetchWooOrders,
@@ -181,8 +182,9 @@ export default function WooCommerceHub({ siteId }: Props) {
     <div className="space-y-6">
       {/* Stock alerts */}
       {stats && stats.low_stock_count > 0 && (
-        <div className="rounded-lg border border-warning-200 bg-warning-50 p-3 text-sm text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-orange-400">
-          ⚠️ {stats.low_stock_count} product{stats.low_stock_count > 1 ? "s" : ""} with low stock.
+        <div className="flex items-center gap-2 rounded-lg border border-warning-200 bg-warning-50 p-3 text-sm text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-orange-400">
+          <AlertIcon className="h-4 w-4 shrink-0" />
+          {stats.low_stock_count} product{stats.low_stock_count > 1 ? "s" : ""} with low stock.
         </div>
       )}
       {stats && stats.out_of_stock_count > 0 && (

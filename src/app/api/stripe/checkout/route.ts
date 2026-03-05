@@ -34,17 +34,21 @@ export async function POST(request: Request) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer_email: user.email ?? undefined,
-    line_items: [{ price: selectedPlan.priceId, quantity: 1 }],
-    success_url: `${appUrl}/billing?success=1`,
-    cancel_url: `${appUrl}/billing?canceled=1`,
-    metadata: { userId: user.id },
-    subscription_data: {
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer_email: user.email ?? undefined,
+      line_items: [{ price: selectedPlan.priceId, quantity: 1 }],
+      success_url: `${appUrl}/billing?success=1`,
+      cancel_url: `${appUrl}/billing?canceled=1`,
       metadata: { userId: user.id },
-    },
-  });
+      subscription_data: {
+        metadata: { userId: user.id },
+      },
+    });
 
-  return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url });
+  } catch {
+    return NextResponse.json({ error: "Checkout service unavailable" }, { status: 503 });
+  }
 }

@@ -1,5 +1,9 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
+
+/** Shared discriminated union for server action results. */
+export type ActionResult<T = void> =
+  | { success: true; data: T }
+  | { success: false; error: string };
 
 /** Returns the authenticated user's ID, or null if not signed in. */
 export async function getCurrentUserId(): Promise<string | null> {

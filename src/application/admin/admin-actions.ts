@@ -126,6 +126,11 @@ export async function adminToggleAdmin(userId: string, isAdmin: boolean) {
   const adminId = await requireAdmin();
   if (!adminId) return { success: false as const, error: "Forbidden" };
 
+  // Prevent self-demotion to avoid lockout
+  if (!isAdmin && adminId === userId) {
+    return { success: false as const, error: "Cannot remove your own admin status" };
+  }
+
   if (isAdmin) {
     await db.insert(adminUsers).values({ userId }).onConflictDoNothing();
   } else {

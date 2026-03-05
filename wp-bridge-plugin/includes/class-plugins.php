@@ -67,6 +67,22 @@ class WPDash_Plugins {
                 ],
             ],
         ]);
+
+        register_rest_route('wpdash/v1', '/plugins/install-zip', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'install_plugin_zip'],
+            'permission_callback' => [$this->auth, 'check_permission'],
+            'args'                => [
+                'zip_data' => [
+                    'required' => true,
+                    'type'     => 'string',
+                ],
+                'filename' => [
+                    'required' => true,
+                    'type'     => 'string',
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -307,5 +323,58 @@ class WPDash_Plugins {
         }
 
         return null;
+    }
+
+    /**
+     * Install a plugin from a base64-encoded ZIP archive.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function install_plugin_zip(WP_REST_Request $request) {
+        $rate_check = $this->rate_limiter->check();
+        if (is_wp_error($rate_check)) {
+            return $rate_check;
+        }
+
+        $zip_data = $request->get_param('zip_data');
+        $filename = sanitize_file_name($request->get_param('filename'));
+
+        if (!str_ends_with($filename, '.zip')) {
+            return new WP_Error('invalid_file', 'Filename must end with .zip', ['status' => 400]);
+        }
+
+        $decoded = base64_decode($zip_data, true);
+        if ($decoded === false) {
+            return new WP_Error('invalid_zip_data', 'Invalid base64 zip data', ['status' => 400]);
+        }
+
+        // Write to temp file
+        $tmp_file = wp_tempnam($filename);
+        file_put_contents($tmp_file, $decoded);
+
+        if (!function_exists('plugins_api')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+        }
+        if (!class_exists('Plugin_Upgrader')) {
+            require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        }
+
+        $skin     = new WP_Ajax_Upgrader_Skin();
+        $upgrader = new Plugin_Upgrader($skin);
+        $result   = $upgrader->install($tmp_file);
+
+        @unlink($tmp_file);
+
+        if (is_wp_error($result)) {
+            return new WP_Error('install_failed', $result->get_error_message(), ['status' => 500]);
+        }
+        if ($result === false) {
+            $errors = $skin->get_errors();
+            $msg    = is_wp_error($errors) ? $errors->get_error_message() : 'Installation failed';
+            return new WP_Error('install_failed', $msg, ['status' => 500]);
+        }
+
+        return new WP_REST_Response(['success' => true, 'plugin_file' => $upgrader->plugin_info()], 200);
     }
 }

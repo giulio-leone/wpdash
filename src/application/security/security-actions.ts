@@ -1,8 +1,9 @@
 "use server";
 
+import type { ActionResult } from "@/lib/server-auth";
+
 import { getCurrentUserId } from "@/lib/server-auth";
 
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSecurityAuditRepository } from "@/infrastructure/database/repositories/security-repository-impl";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import type {
@@ -17,9 +18,6 @@ import { db } from "@/infrastructure/database/drizzle-client";
 import { sites as sitesSchema } from "@/infrastructure/database/schemas/sites";
 import { eq } from "drizzle-orm";
 
-type ActionResult<T = void> =
-  | { success: true; data: T }
-  | { success: false; error: string };
 
 const securityRepo = new DrizzleSecurityAuditRepository();
 const siteRepo = new DrizzleSiteRepository();

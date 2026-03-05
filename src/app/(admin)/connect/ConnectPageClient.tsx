@@ -3,40 +3,34 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSite } from "@/application/site/site-actions";
 import { toast } from "@/hooks/useToast";
+import {
+  BoltIcon, DownloadIcon, PlugInIcon, CheckCircleIcon,
+  CheckLineIcon, LockIcon, PieChartIcon, ArrowUpIcon, ArrowRightIcon,
+} from "@/icons";
 
-type Step = 1 | 2 | 3 | 4 | 5;
-
-const STEPS = [
-  { id: 1, label: "Welcome" },
-  { id: 2, label: "Download Plugin" },
-  { id: 3, label: "Install & Activate" },
-  { id: 4, label: "Connect Site" },
-  { id: 5, label: "Done!" },
-];
+type Phase = "form" | "done";
 
 export default function ConnectPageClient() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(1);
-  const [animating, setAnimating] = useState(false);
+  const [phase, setPhase] = useState<Phase>("form");
   const [siteName, setSiteName] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
   const [siteToken, setSiteToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
-  // Animate step transitions
-  function goTo(next: Step) {
-    if (next === step) return;
-    setAnimating(true);
-    setTimeout(() => {
-      setStep(next);
-      setAnimating(false);
-    }, 200);
+  function getMagicInstallUrl() {
+    if (!siteUrl) return null;
+    try {
+      const base = siteUrl.replace(/\/$/, "");
+      // Opens WP admin plugin install page — user clicks Install from there
+      return `${base}/wp-admin/plugin-install.php?s=wp-dash-bridge&tab=search&type=term`;
+    } catch {
+      return null;
+    }
   }
-
-  // Progress percentage
-  const progress = Math.round(((step - 1) / (STEPS.length - 1)) * 100);
 
   async function handleVerify() {
     if (!siteUrl || !siteToken) return;
@@ -70,361 +64,211 @@ export default function ConnectPageClient() {
     const result = await createSite(fd);
     setSubmitting(false);
     if (result.success) {
-      setStep(5);
+      setPhase("done");
     } else {
       toast.error(result.error ?? "Failed to connect site");
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-start py-12 px-4">
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Connect a WordPress Site</h1>
-        <p className="mt-2 text-gray-500 dark:text-gray-400">Follow the steps to add a site to your dashboard</p>
-      </div>
-
-      {/* Step indicator */}
-      <div className="w-full max-w-2xl mb-4">
-        {/* Progress bar */}
-        <div className="mb-4 h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-          <div
-            className="h-1.5 rounded-full bg-brand-500 transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
+  if (phase === "done") {
+    return (
+      <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6 px-4 py-16 text-center">
+        <div className="flex h-24 w-24 animate-bounce items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+          <CheckCircleIcon className="h-14 w-14 text-green-500" />
         </div>
-        <div className="flex items-center justify-between relative">
-          <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700 z-0" />
-          {STEPS.map((s) => (
-            <div key={s.id} className="relative z-10 flex flex-col items-center gap-1.5">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-300 ${
-                  step === s.id
-                    ? "bg-brand-500 border-brand-500 text-white scale-110"
-                    : step > s.id
-                    ? "bg-green-500 border-green-500 text-white"
-                    : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-400"
-                }`}
-              >
-                {step > s.id ? "✓" : s.id}
-              </div>
-              <span className={`text-xs font-medium hidden sm:block transition-colors ${step === s.id ? "text-brand-500 font-semibold" : step > s.id ? "text-green-500" : "text-gray-400"}`}>
-                {s.label}
-              </span>
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Site Connected!</h2>
+          <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+            <strong className="text-gray-800 dark:text-gray-200">{siteName}</strong> is now connected.
+            Monitoring starts immediately.
+          </p>
+        </div>
+        <div className="grid w-full max-w-md grid-cols-2 gap-3">
+          {[
+            { icon: <PieChartIcon className="w-5 h-5 text-brand-500" />, label: "Uptime monitoring active" },
+            { icon: <LockIcon className="w-5 h-5 text-gray-500" />, label: "Security audit queued" },
+            { icon: <PlugInIcon className="w-5 h-5 text-blue-500" />, label: "Plugin sync ready" },
+            { icon: <ArrowUpIcon className="w-5 h-5 text-green-500" />, label: "SEO audit available" },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-3 rounded-xl bg-gray-50 p-3 text-left dark:bg-gray-800">
+              <span className="flex items-center">{item.icon}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{item.label}</span>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Step counter */}
-      <div className="w-full max-w-2xl mb-4 flex items-center justify-between text-xs text-gray-400 dark:text-gray-600">
-        <span>Step {step} of {STEPS.length}</span>
-        <span>{progress}% complete</span>
-      </div>
-
-      {/* Card */}
-      <div
-        className={`w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 overflow-hidden transition-opacity duration-200 ${
-          animating ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"
-        }`}
-        style={{ transition: "opacity 0.2s ease, transform 0.2s ease" }}
-      >
-
-        {/* Step 1 — Welcome */}
-        {step === 1 && (
-          <div className="p-10 flex flex-col items-center text-center gap-6">
-            <div className="w-24 h-24 rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-5xl">
-              🚀
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome to WP Dash!</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-base max-w-md mx-auto">
-                Connect your WordPress site in 4 easy steps. We&apos;ll guide you through installing the bridge plugin
-                and linking your site securely.
-              </p>
-            </div>
-            <div className="grid grid-cols-3 gap-4 w-full mt-2">
-              {[
-                { icon: "🔒", title: "Secure", desc: "Bearer token auth, no password stored" },
-                { icon: "⚡", title: "Lightweight", desc: "Plugin responds only when dashboard asks" },
-                { icon: "🔌", title: "Compatible", desc: "Works with any WP hosting & security plugins" },
-              ].map((f) => (
-                <div key={f.title} className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4 text-center">
-                  <div className="text-2xl mb-1">{f.icon}</div>
-                  <div className="font-semibold text-sm text-gray-800 dark:text-gray-200">{f.title}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{f.desc}</div>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => goTo(2 as Step)}
-              className="mt-2 px-10 py-3 rounded-xl bg-brand-500 text-white font-semibold text-base hover:bg-brand-600 transition-colors"
-            >
-              Get Started →
-            </button>
-          </div>
-        )}
-
-        {/* Step 2 — Download plugin */}
-        {step === 2 && (
-          <div className="p-10 flex flex-col items-center gap-6">
-            <div className="w-20 h-20 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-4xl">
-              📦
-            </div>
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Download the Bridge Plugin</h2>
-              <p className="text-gray-500 dark:text-gray-400">
-                The WP Dash Bridge is an ultra-lightweight WordPress plugin that lets the dashboard communicate
-                securely with your site.
-              </p>
-            </div>
-            <div className="w-full rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-900/10 p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">📋</span>
-                <span className="font-semibold text-gray-800 dark:text-gray-200">What the plugin does:</span>
-              </div>
-              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                {[
-                  "Exposes secure REST API endpoints under /wp-json/wpdash/v1/",
-                  "Authenticates every request via a unique Bearer Token",
-                  "Responds only when the dashboard calls it (no background processes)",
-                  "Works alongside Wordfence, iThemes, and other security plugins",
-                ].map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="text-green-500 mt-0.5">✓</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <a
-              href="/api/plugin-download"
-              download="wp-dash-bridge.zip"
-              className="flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-500 text-white font-semibold text-base hover:bg-blue-600 transition-colors shadow-sm"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Download wp-dash-bridge.zip
-            </a>
-            <div className="flex gap-3 mt-2">
-              <button onClick={() => goTo(1 as Step)} className="px-6 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors">
-                ← Back
-              </button>
-              <button onClick={() => goTo(3 as Step)} className="px-6 py-2 rounded-lg bg-brand-500 text-white font-semibold text-sm hover:bg-brand-600 transition-colors">
-                Downloaded →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3 — Install & get token */}
-        {step === 3 && (
-          <div className="p-10 flex flex-col items-center gap-6">
-            <div className="w-20 h-20 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-4xl">
-              🔧
-            </div>
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Install &amp; Get Your Token</h2>
-              <p className="text-gray-500 dark:text-gray-400">Follow these steps in your WordPress admin panel</p>
-            </div>
-            <div className="w-full space-y-4">
-              {[
-                {
-                  step: "1",
-                  title: "Upload the plugin",
-                  desc: 'Go to Plugins → Add New → Upload Plugin, then select the downloaded ZIP file and click "Install Now"',
-                  icon: "📂",
-                },
-                {
-                  step: "2",
-                  title: "Activate the plugin",
-                  desc: 'After installation, click "Activate Plugin" to enable it on your WordPress site',
-                  icon: "✅",
-                },
-                {
-                  step: "3",
-                  title: "Copy your Bearer Token",
-                  desc: 'Go to WP Dash Bridge → Settings in your WP admin. Your unique token is displayed there. Copy it — you\'ll need it in the next step.',
-                  icon: "🔑",
-                },
-              ].map((item) => (
-                <div key={item.step} className="flex gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                  <div className="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                    {item.step}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-lg">{item.icon}</span>
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">{item.title}</span>
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-2">
-              <button onClick={() => goTo(2 as Step)} className="px-6 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors">
-                ← Back
-              </button>
-              <button onClick={() => goTo(4 as Step)} className="px-6 py-2 rounded-lg bg-brand-500 text-white font-semibold text-sm hover:bg-brand-600 transition-colors">
-                I have my token →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4 — Connect */}
-        {step === 4 && (
-          <div className="p-10 flex flex-col items-center gap-6">
-            <div className="w-20 h-20 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-4xl">
-              🔗
-            </div>
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Connect Your Site</h2>
-              <p className="text-gray-500 dark:text-gray-400">Enter your site details to complete the connection</p>
-            </div>
-            <form onSubmit={handleConnect} className="w-full space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Site Name
-                </label>
-                <input
-                  type="text"
-                  value={siteName}
-                  onChange={(e) => setSiteName(e.target.value)}
-                  placeholder="My WordPress Site"
-                  required
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Site URL
-                </label>
-                <input
-                  type="url"
-                  value={siteUrl}
-                  onChange={(e) => setSiteUrl(e.target.value)}
-                  placeholder="https://yoursite.com"
-                  required
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Bearer Token <span className="text-gray-400 font-normal">(from WP Dash Bridge plugin)</span>
-                </label>
-                <input
-                  type="text"
-                  value={siteToken}
-                  onChange={(e) => { setSiteToken(e.target.value); setVerified(false); }}
-                  placeholder="Paste your token here"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-mono"
-                />
-              </div>
-              {siteUrl && siteToken && !verified && (
-                <button
-                  type="button"
-                  onClick={handleVerify}
-                  disabled={verifying}
-                  className="w-full px-4 py-2.5 rounded-xl border-2 border-brand-500 text-brand-500 font-semibold text-sm hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors disabled:opacity-50"
-                >
-                  {verifying ? "Verifying connection…" : "🔍 Test Connection"}
-                </button>
-              )}
-              {verified && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                  <span className="text-green-500 text-lg">✅</span>
-                  <span className="text-sm font-medium text-green-700 dark:text-green-300">Connection verified! Site is reachable.</span>
-                </div>
-              )}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => goTo(3 as Step)}
-                  className="px-6 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors"
-                >
-                  ← Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting || !siteName || !siteUrl}
-                  className="flex-1 px-6 py-2.5 rounded-xl bg-brand-500 text-white font-semibold text-sm hover:bg-brand-600 transition-colors disabled:opacity-50"
-                >
-                  {submitting ? "Connecting…" : "Connect Site →"}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Step 5 — Done */}
-        {step === 5 && (
-          <div className="p-10 flex flex-col items-center text-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-5xl animate-bounce">
-              🎉
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Site Connected!</h2>
-              <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                <strong className="text-gray-800 dark:text-gray-200">{siteName}</strong> is now connected to your
-                WP Dash dashboard. Monitoring starts immediately.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 w-full mt-2">
-              {[
-                { icon: "📊", label: "Uptime monitoring active" },
-                { icon: "🔒", label: "Security audit queued" },
-                { icon: "🔌", label: "Plugin sync ready" },
-                { icon: "📈", label: "SEO audit available" },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-left">
-                  <span className="text-xl">{item.icon}</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{item.label}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-2">
-              <button
-                onClick={() => router.push("/sites")}
-                className="px-8 py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors"
-              >
-                View Sites Dashboard
-              </button>
-              <button
-                onClick={() => { setStep(1); setSiteName(""); setSiteUrl(""); setSiteToken(""); setVerified(false); }}
-                className="px-8 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors"
-              >
-                + Connect Another Site
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Bottom help text */}
-      {step < 5 && (
-        <div className="mt-6 text-center space-y-2">
-          <p className="text-sm text-gray-400 dark:text-gray-600">
-            Prefer WordPress native?{" "}
-            <a href="/api/wpdash-plugin-download" className="text-brand-500 hover:underline font-medium" download="wp-wpdash.zip">
-              Download the WP Dash Hub Plugin
-            </a>{" "}
-            — manage all sites directly from any WordPress admin.
-          </p>
-          <p className="text-sm text-gray-400 dark:text-gray-600">
-            Need help?{" "}
-            <a href="/mcp" className="text-brand-500 hover:underline">
-              MCP / AI docs
-            </a>{" "}
-            or{" "}
-            <a href="mailto:support@wpdash.io" className="text-brand-500 hover:underline">
-              contact support
-            </a>
-          </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => router.push("/sites")}
+            className="rounded-xl bg-brand-500 px-8 py-3 font-semibold text-white hover:bg-brand-600 transition-colors"
+          >
+            Go to Dashboard
+          </button>
+          <button
+            onClick={() => { setPhase("form"); setSiteName(""); setSiteUrl(""); setSiteToken(""); setVerified(false); }}
+            className="rounded-xl border border-gray-200 px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+          >
+            Add Another
+          </button>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-xl px-4 py-12">
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-900/20">
+          <BoltIcon className="h-7 w-7 text-brand-500" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Connect a WordPress Site</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Enter your site details below. Takes less than 60 seconds.
+        </p>
+      </div>
+
+      {/* Help accordion: get bridge plugin */}
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setHelpOpen((o) => !o)}
+          className="flex w-full items-center justify-between px-5 py-4 text-left"
+        >
+          <div className="flex items-center gap-3">
+            <PlugInIcon className="h-5 w-5 text-brand-500 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Step 1 — Install Bridge Plugin</p>
+              <p className="text-xs text-gray-400">Download & activate the WP Dash Bridge on your site</p>
+            </div>
+          </div>
+          <ArrowRightIcon className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${helpOpen ? "rotate-90" : ""}`} />
+        </button>
+
+        {helpOpen && (
+          <div className="border-t border-gray-100 px-5 pb-5 dark:border-gray-800">
+            <ol className="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-400">
+              <li className="flex gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">1</span>
+                <span>Download the bridge plugin ZIP from the button below</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">2</span>
+                <span>In your WP admin: <strong>Plugins → Add New → Upload Plugin</strong>, select the ZIP</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">3</span>
+                <span>Activate it — your Bearer Token appears under <strong>WP Dash Bridge → Settings</strong></span>
+              </li>
+            </ol>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <a
+                href="/api/plugin-download"
+                download="wp-dash-bridge.zip"
+                className="flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 transition-colors"
+              >
+                <DownloadIcon className="h-4 w-4" />
+                Download Bridge Plugin
+              </a>
+              {siteUrl && getMagicInstallUrl() && (
+                <a
+                  href={getMagicInstallUrl()!}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-brand-200 px-4 py-2.5 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-300 dark:hover:bg-brand-900/20 transition-colors"
+                >
+                  <BoltIcon className="h-4 w-4" />
+                  Open WP Plugin Installer
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main connection form */}
+      <div className="rounded-xl border border-gray-200 bg-white px-6 py-6 dark:border-gray-700 dark:bg-gray-900">
+        <div className="mb-5 flex items-center gap-3">
+          <ArrowRightIcon className="h-5 w-5 text-brand-500 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Step 2 — Connect to Dashboard</p>
+            <p className="text-xs text-gray-400">Enter your site details to start monitoring</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleConnect} className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Site Name
+            </label>
+            <input
+              type="text"
+              required
+              value={siteName}
+              onChange={(e) => setSiteName(e.target.value)}
+              placeholder="My WordPress Site"
+              className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Site URL
+            </label>
+            <input
+              type="url"
+              required
+              value={siteUrl}
+              onChange={(e) => { setSiteUrl(e.target.value); setVerified(false); }}
+              placeholder="https://yoursite.com"
+              className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Bearer Token
+              <span className="ml-1 text-xs font-normal text-gray-400">(from WP Dash Bridge → Settings)</span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={siteToken}
+                onChange={(e) => { setSiteToken(e.target.value); setVerified(false); }}
+                placeholder="Paste your token here"
+                className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+              <button
+                type="button"
+                onClick={handleVerify}
+                disabled={!siteUrl || !siteToken || verifying || verified}
+                className="shrink-0 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+              >
+                {verifying ? "Checking…" : verified ? <CheckLineIcon className="h-4 w-4 text-green-500" /> : "Test"}
+              </button>
+            </div>
+            {verified && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400">
+                <CheckLineIcon className="h-3.5 w-3.5" />
+                Connection verified
+              </div>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting || !siteName || !siteUrl}
+            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-white hover:bg-brand-600 disabled:opacity-50 transition-colors"
+          >
+            {submitting ? "Connecting…" : "Connect Site"}
+          </button>
+        </form>
+
+        {/* Security note */}
+        <div className="mt-4 flex items-start gap-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+          <LockIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <span>Your password is never stored. Communication uses encrypted Bearer Tokens only.</span>
+        </div>
+      </div>
     </div>
   );
 }

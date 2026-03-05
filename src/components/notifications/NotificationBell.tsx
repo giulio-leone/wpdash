@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getNotifications, markAllRead } from "@/application/notifications/notification-actions";
 import { toast } from "@/hooks/useToast";
+import { CloseLineIcon, BoltIcon, AlertIcon, InfoIcon } from "@/icons";
 
 type Notification = {
   id: string;
@@ -12,11 +13,11 @@ type Notification = {
   createdAt: Date;
 };
 
-const typeIcon = (type: string) => {
-  if (type === "site_offline") return "🔴";
-  if (type === "update_available") return "🔵";
-  if (type === "backup_stale") return "🟡";
-  return "ℹ️";
+const typeIcon = (type: string): React.ReactNode => {
+  if (type === "site_offline") return <CloseLineIcon className="w-4 h-4 text-error-500" />;
+  if (type === "update_available") return <BoltIcon className="w-4 h-4 text-brand-500" />;
+  if (type === "backup_stale") return <AlertIcon className="w-4 h-4 text-warning-500" />;
+  return <InfoIcon className="w-4 h-4 text-gray-400" />;
 };
 
 function timeAgo(date: Date): string {
@@ -42,10 +43,11 @@ export default function NotificationBell() {
   }
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     load();
     const interval = setInterval(load, 30_000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   useEffect(() => {
@@ -92,7 +94,7 @@ export default function NotificationBell() {
               <div className="py-8 text-center text-sm text-gray-400">No notifications</div>
             ) : items.map(n => (
               <div key={n.id} className={`flex gap-3 px-4 py-3 transition-colors ${!n.read ? "bg-blue-50/60 dark:bg-blue-900/10" : ""}`}>
-                <span className="text-lg leading-none mt-0.5">{typeIcon(n.type)}</span>
+                <span className="mt-0.5 shrink-0 flex items-center">{typeIcon(n.type)}</span>
                 <div className="flex-1 min-w-0">
                   {n.siteName && <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">{n.siteName}</p>}
                   <p className="text-xs text-gray-700 dark:text-gray-300 leading-snug">{n.message}</p>

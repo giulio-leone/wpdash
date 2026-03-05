@@ -19,8 +19,10 @@ import SeoDetails from "@/components/seo/SeoDetails";
 import ThemesList from "@/components/themes/ThemesList";
 import UsersList from "@/components/users/UsersList";
 import ContentList from "@/components/content/ContentList";
-import WooCommerceHub from "@/components/woocommerce/WooCommerceHub";
-import DatabaseManager from "@/components/database/DatabaseManager";
+import dynamic from "next/dynamic";
+
+const WooCommerceHub = dynamic(() => import("@/components/woocommerce/WooCommerceHub"), { ssr: false });
+const DatabaseManager = dynamic(() => import("@/components/database/DatabaseManager"), { ssr: false });
 import UpdatesPanel from "@/components/updates/UpdatesPanel";
 import HealthScoreWidget from "@/components/health/HealthScoreWidget";
 import { cn } from "@/lib/cn";

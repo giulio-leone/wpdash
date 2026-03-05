@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/cn";
 import Button from "@/components/ui/button/Button";
+import { CheckLineIcon, CloseLineIcon } from "@/icons";
 import {
   fetchDBStatus,
   optimizeDatabase,
@@ -19,7 +20,7 @@ export default function DatabaseManager({ siteId }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [actionResult, setActionResult] = useState<string | null>(null);
+  const [actionResult, setActionResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,9 +44,9 @@ export default function DatabaseManager({ siteId }: Props) {
     setActionResult(null);
     const result = await optimizeDatabase(siteId);
     if (result.success) {
-      setActionResult(`✅ Optimized ${result.tablesOptimized} table${result.tablesOptimized !== 1 ? "s" : ""}.`);
+      setActionResult({ success: true, message: `Optimized ${result.tablesOptimized} table${result.tablesOptimized !== 1 ? "s" : ""}.` });
     } else {
-      setActionResult(`❌ ${result.error}`);
+      setActionResult({ success: false, message: result.error ?? "Unknown error" });
     }
     setActionLoading(null);
     await load();
@@ -57,9 +58,9 @@ export default function DatabaseManager({ siteId }: Props) {
       setActionResult(null);
       const result = await cleanupDatabase(siteId, action);
       if (result.success) {
-        setActionResult(`✅ ${result.message} (${result.rowsDeleted} rows deleted)`);
+        setActionResult({ success: true, message: `${result.message} (${result.rowsDeleted} rows deleted)` });
       } else {
-        setActionResult(`❌ ${result.error}`);
+        setActionResult({ success: false, message: result.error ?? "Unknown error" });
       }
       setActionLoading(null);
       await load();
@@ -152,8 +153,11 @@ export default function DatabaseManager({ siteId }: Props) {
 
       {/* Action feedback */}
       {actionResult && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
-          {actionResult}
+        <div className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${actionResult.success ? "border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-400" : "border-error-200 bg-error-50 text-error-700 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-400"}`}>
+          {actionResult.success
+            ? <CheckLineIcon className="h-4 w-4 shrink-0" />
+            : <CloseLineIcon className="h-4 w-4 shrink-0" />}
+          {actionResult.message}
         </div>
       )}
 

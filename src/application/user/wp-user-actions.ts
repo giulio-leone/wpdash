@@ -3,7 +3,6 @@
 import { getCurrentUserId } from "@/lib/server-auth";
 
 import { eq, and } from "drizzle-orm";
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { db } from "@/infrastructure/database/drizzle-client";
 import { sites } from "@/infrastructure/database/schemas/sites";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";

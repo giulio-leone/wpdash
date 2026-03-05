@@ -128,6 +128,21 @@ export class WPBridgeClient {
     );
   }
 
+  async installPluginFromZip(
+    siteUrl: string,
+    token: string,
+    zipBuffer: ArrayBuffer,
+    filename: string,
+  ): Promise<BridgePluginActionResponse> {
+    const base64 = Buffer.from(zipBuffer).toString("base64");
+    return this.post<BridgePluginActionResponse>(
+      siteUrl,
+      token,
+      "/plugins/install-zip",
+      { zip_data: base64, filename },
+    );
+  }
+
   // ── Security ────────────────────────────────────────────────────────────
 
   async getSecurityAudit(

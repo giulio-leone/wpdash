@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import React from "react";
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { db } from "@/infrastructure/database/drizzle-client";
 import { sites } from "@/infrastructure/database/schemas/sites";
@@ -8,6 +9,7 @@ import { securityAudits } from "@/infrastructure/database/schemas/security-audit
 import { eq, desc, inArray, and } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CheckCircleIcon, AlertIcon, BoltIcon, BellIcon, GridIcon, CloseLineIcon, InfoIcon, PieChartIcon } from "@/icons";
 
 export const metadata: Metadata = {
   title: "Dashboard | WP Dash",
@@ -34,11 +36,11 @@ function issueBadgeClass(issue: string): string {
   return "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400";
 }
 
-function notifIcon(type: string): string {
-  if (type === "site_offline") return "🔴";
-  if (type === "update_available") return "🔵";
-  if (type === "backup_stale") return "🟡";
-  return "ℹ️";
+function notifIcon(type: string): React.ReactNode {
+  if (type === "site_offline") return <CloseLineIcon className="w-4 h-4 text-error-500" />;
+  if (type === "update_available") return <BoltIcon className="w-4 h-4 text-brand-500" />;
+  if (type === "backup_stale") return <AlertIcon className="w-4 h-4 text-warning-500" />;
+  return <InfoIcon className="w-4 h-4 text-gray-400" />;
 }
 
 function StatCard({
@@ -50,14 +52,14 @@ function StatCard({
 }: {
   label: string;
   value: number;
-  icon: string;
+  icon: React.ReactNode;
   borderClass: string;
   valueClass?: string;
 }) {
   return (
     <div className={`rounded-xl border bg-white p-5 dark:bg-gray-900 ${borderClass}`}>
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xl">{icon}</span>
+        <span className="flex items-center">{icon}</span>
       </div>
       <p className={`text-2xl font-bold ${valueClass}`}>{value}</p>
       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{label}</p>
@@ -82,26 +84,30 @@ export default async function DashboardPage() {
   const totalSites = allSites.length;
   const onlineSites = allSites.filter((s) => s.status === "online").length;
 
-  // Sites with pending plugin updates
-  let sitesWithUpdatesIds: string[] = [];
-  if (siteIds.length > 0) {
-    const rows = await db
-      .selectDistinct({ siteId: sitePlugins.siteId })
-      .from(sitePlugins)
-      .where(
-        and(eq(sitePlugins.hasUpdate, true), inArray(sitePlugins.siteId, siteIds)),
-      );
-    sitesWithUpdatesIds = rows.map((r) => r.siteId);
-  }
+  // Batch independent queries in parallel after sites are loaded
+  const [updatesRows, recentNotifications, secRows] = await Promise.all([
+    siteIds.length > 0
+      ? db
+          .selectDistinct({ siteId: sitePlugins.siteId })
+          .from(sitePlugins)
+          .where(and(eq(sitePlugins.hasUpdate, true), inArray(sitePlugins.siteId, siteIds)))
+      : Promise.resolve([]),
+    db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, user.id))
+      .orderBy(desc(notifications.createdAt))
+      .limit(5),
+    siteIds.length > 0
+      ? db
+          .select({ siteId: securityAudits.siteId, status: securityAudits.status })
+          .from(securityAudits)
+          .where(inArray(securityAudits.siteId, siteIds))
+          .orderBy(desc(securityAudits.auditedAt))
+      : Promise.resolve([]),
+  ]);
 
-  // Recent notifications (last 5)
-  const recentNotifications = await db
-    .select()
-    .from(notifications)
-    .where(eq(notifications.userId, user.id))
-    .orderBy(desc(notifications.createdAt))
-    .limit(5);
-
+  const sitesWithUpdatesIds = updatesRows.map((r) => r.siteId);
   const criticalAlerts = recentNotifications.filter((n) => !n.read).length;
 
   // Build "sites needing attention" map
@@ -122,13 +128,7 @@ export default async function DashboardPage() {
   });
 
   // Security issues (latest audit per site)
-  if (siteIds.length > 0) {
-    const secRows = await db
-      .select({ siteId: securityAudits.siteId, status: securityAudits.status })
-      .from(securityAudits)
-      .where(inArray(securityAudits.siteId, siteIds))
-      .orderBy(desc(securityAudits.auditedAt));
-
+  if (secRows.length > 0) {
     const latestPerSite = new Map<string, string>();
     for (const row of secRows) {
       if (!latestPerSite.has(row.siteId)) latestPerSite.set(row.siteId, row.status);
@@ -172,13 +172,15 @@ export default async function DashboardPage() {
             href="/updates"
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           >
-            🔄 Network Updates
+            <BoltIcon className="h-4 w-4" />
+            Network Updates
           </Link>
           <Link
             href="/reports"
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           >
-            📊 Export Report
+            <PieChartIcon className="h-4 w-4" />
+            Export Report
           </Link>
         </div>
       </div>
@@ -188,20 +190,20 @@ export default async function DashboardPage() {
         <StatCard
           label="Total Sites"
           value={totalSites}
-          icon="🌐"
+          icon={<GridIcon className="w-5 h-5 text-gray-400" />}
           borderClass="border-gray-200 dark:border-gray-700"
         />
         <StatCard
           label="Sites Online"
           value={onlineSites}
-          icon="✅"
+          icon={<CheckCircleIcon className="w-5 h-5 text-green-500" />}
           borderClass="border-green-200 dark:border-green-900/50"
           valueClass="text-green-600 dark:text-green-400"
         />
         <StatCard
           label="Pending Updates"
           value={sitesWithUpdatesIds.length}
-          icon="🔄"
+          icon={<BoltIcon className="w-5 h-5 text-yellow-500" />}
           borderClass="border-yellow-200 dark:border-yellow-900/50"
           valueClass={
             sitesWithUpdatesIds.length > 0
@@ -212,7 +214,7 @@ export default async function DashboardPage() {
         <StatCard
           label="Unread Alerts"
           value={criticalAlerts}
-          icon="🔔"
+          icon={<BellIcon className="w-5 h-5 text-red-500" />}
           borderClass="border-red-200 dark:border-red-900/50"
           valueClass={
             criticalAlerts > 0
@@ -231,7 +233,7 @@ export default async function DashboardPage() {
           </h2>
           {attentionSites.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <span className="mb-2 text-3xl">✅</span>
+              <CheckCircleIcon className="mb-2 h-10 w-10 text-green-500" />
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 All systems go!
               </p>
@@ -287,7 +289,7 @@ export default async function DashboardPage() {
           </div>
           {recentNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <span className="mb-2 text-3xl">✅</span>
+              <CheckCircleIcon className="mb-2 h-10 w-10 text-green-500" />
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">All clear!</p>
               <p className="mt-1 text-xs text-gray-400">No recent alerts.</p>
             </div>
@@ -298,7 +300,7 @@ export default async function DashboardPage() {
                   key={n.id}
                   className={`flex items-start gap-3 py-3 first:pt-0 last:pb-0 ${!n.read ? "opacity-100" : "opacity-60"}`}
                 >
-                  <span className="mt-0.5 shrink-0 text-base">{notifIcon(n.type)}</span>
+                  <span className="mt-0.5 shrink-0 flex items-center">{notifIcon(n.type)}</span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm leading-snug text-gray-700 dark:text-gray-300">
                       {n.message}

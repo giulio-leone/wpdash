@@ -1,8 +1,9 @@
 "use server";
 
+import type { ActionResult } from "@/lib/server-auth";
+
 import { getCurrentUserId } from "@/lib/server-auth";
 
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import { generateSiteToken } from "./token-service";
 import { createSiteSchema, updateSiteSchema } from "./validation";
@@ -13,9 +14,6 @@ import { eq } from "drizzle-orm";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
 import { canAddSite } from "@/application/organization/organization-actions";
 
-type ActionResult<T = void> =
-  | { success: true; data: T }
-  | { success: false; error: string };
 
 const repo = new DrizzleSiteRepository();
 

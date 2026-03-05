@@ -1,8 +1,9 @@
 "use server";
 
+import type { ActionResult } from "@/lib/server-auth";
+
 import { getCurrentUserId } from "@/lib/server-auth";
 
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import { DrizzleUptimeRepository } from "@/infrastructure/database/repositories/uptime-repository-impl";
 import { DrizzleSecurityAuditRepository } from "@/infrastructure/database/repositories/security-repository-impl";
@@ -14,9 +15,6 @@ import { generateCSV } from "@/lib/csv";
 import { UPTIME_RETENTION_DAYS } from "@/lib/constants";
 import type { Site } from "@/domain/site/entity";
 
-type ActionResult<T = void> =
-  | { success: true; data: T }
-  | { success: false; error: string };
 
 const siteRepo = new DrizzleSiteRepository();
 const uptimeRepo = new DrizzleUptimeRepository();
@@ -36,6 +34,8 @@ export interface NetworkOverview {
   sitesWithOutdatedPlugins: number;
   sitesWithStaleBackups: number;
   healthScore: number;
+  /** Pre-built per-site reports — avoids client re-fetching */
+  siteReports: Record<string, SiteReport>;
 }
 
 export interface SiteReport {
@@ -184,6 +184,7 @@ export async function getNetworkOverview(): Promise<
         sitesWithOutdatedPlugins,
         sitesWithStaleBackups,
         healthScore,
+        siteReports: Object.fromEntries(sites.map((s, i) => [s.id, reports[i]!])),
       },
     };
   } catch (error) {

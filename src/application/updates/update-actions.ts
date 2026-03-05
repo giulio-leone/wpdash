@@ -1,5 +1,7 @@
 "use server";
 
+import type { ActionResult } from "@/lib/server-auth";
+
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
 import { db } from "@/infrastructure/database/drizzle-client";
@@ -8,9 +10,6 @@ import { eq, and } from "drizzle-orm";
 import { maybeNotifyUpdates } from "@/application/notifications/notification-actions";
 import type { BridgeUpdatesStatusResponse } from "@/infrastructure/wp-bridge/types";
 
-type ActionResult<T = void> =
-  | { success: true; data: T }
-  | { success: false; error: string };
 
 const bridge = new WPBridgeClient();
 

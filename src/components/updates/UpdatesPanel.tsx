@@ -102,6 +102,7 @@ export default function UpdatesPanel({ siteId }: Props) {
     setLoading(false);
   }, [siteId]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   const handleCoreUpdate = useCallback(async () => {

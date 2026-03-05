@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchAllUpdates, applyCoreSiteUpdate, type SiteUpdateItem } from "@/application/updates/network-updates-actions";
 import { toast } from "@/hooks/useToast";
+import { CheckCircleIcon } from "@/icons";
 
 type ItemStatus = "idle" | "updating" | "done" | "error";
 
@@ -37,6 +38,7 @@ export default function NetworkUpdatesClient() {
   function toggleSelect(key: string) {
     setSelected((prev) => {
       const next = new Set(prev);
+      // eslint-disable-next-line drizzle/enforce-delete-with-where
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
@@ -87,7 +89,7 @@ export default function NetworkUpdatesClient() {
   if (updates.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <span className="text-5xl">✅</span>
+        <CheckCircleIcon className="w-14 h-14 text-green-500" />
         <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">All sites are up to date</p>
         <p className="text-sm text-gray-400">No pending updates found across your sites.</p>
       </div>
