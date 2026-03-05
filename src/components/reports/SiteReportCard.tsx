@@ -43,8 +43,11 @@ function securityBadge(status: string | null) {
 export default function SiteReportCard({ report }: Props) {
   if (!report) {
     return (
-      <div className="flex items-center justify-center px-4 py-3 text-sm text-gray-400">
-        Loading…
+      <div className="flex gap-6 px-4 py-3">
+        <div className="h-4 w-32 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+        <div className="h-4 w-16 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+        <div className="h-4 w-12 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+        <div className="h-4 flex-1 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
       </div>
     );
   }

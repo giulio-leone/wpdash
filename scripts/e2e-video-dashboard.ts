@@ -708,11 +708,47 @@ async function main() {
     await sleep(2000);
 
     // ──────────────────────────────────────────────────────────
-    //  Scene 15 — Back to Overview (finale)
+    //  Scene 15 — Network Reports
     // ──────────────────────────────────────────────────────────
-    hr("Scene 15 — Finale: Overview");
-    await clickTab(page, "Overview");
-    await sleep(6000);
+    hr("Scene 15 — Network Reports");
+    await page.goto(`${DASHBOARD_URL}/reports`);
+    await page.waitForLoadState("networkidle");
+    await sleep(5000);
+    console.log("  ✅ Network reports page loaded");
+
+    // Hover over summary cards
+    const reportCards = page.locator(".card-hover");
+    const cardCount = await reportCards.count();
+    for (let i = 0; i < Math.min(cardCount, 4); i++) {
+      await reportCards.nth(i).hover();
+      await sleep(400);
+    }
+
+    // Click Export Network CSV
+    const exportCsvBtn = page.getByRole("button", { name: /export network/i }).first();
+    if (await exportCsvBtn.count() > 0) {
+      await exportCsvBtn.hover();
+      await sleep(600);
+      await exportCsvBtn.click();
+      await sleep(2000);
+      console.log("  ✅ Network CSV export triggered");
+    }
+    await sleep(2000);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 16 — Back to Overview (finale)
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 16 — Finale: Overview");
+    await page.goto(`${DASHBOARD_URL}/sites`);
+    await page.waitForLoadState("networkidle");
+    await sleep(3000);
+    // Navigate back to site detail overview
+    const siteLink = page.locator(`a[href*="/sites/"]`).first();
+    if (await siteLink.count() > 0) {
+      await siteLink.click();
+      await page.waitForLoadState("networkidle");
+      await sleep(6000);
+    }
     console.log("  ✅ 360° onboarding demo complete");
 
   } catch (err) {

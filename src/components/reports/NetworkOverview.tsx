@@ -129,7 +129,7 @@ export default function NetworkOverview({ overview, sites }: Props) {
           <div
             key={card.label}
             className={cn(
-              "rounded-xl border p-4",
+              "card-hover rounded-xl border p-4",
               "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800",
             )}
           >
@@ -163,8 +163,15 @@ export default function NetworkOverview({ overview, sites }: Props) {
           </h2>
         </div>
         {loading ? (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-            Loading site reports…
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-6 px-4 py-3">
+                <div className="h-4 w-32 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                <div className="h-4 w-16 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                <div className="h-4 w-12 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+                <div className="h-4 flex-1 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+              </div>
+            ))}
           </div>
         ) : sites.length === 0 ? (
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">
