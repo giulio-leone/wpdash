@@ -69,8 +69,13 @@ export default function DatabaseManager({ siteId }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-20 rounded-xl bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+          ))}
+        </div>
+        <div className="h-48 rounded-xl bg-gray-200 animate-pulse dark:bg-gray-700/60" />
       </div>
     );
   }
@@ -91,25 +96,25 @@ export default function DatabaseManager({ siteId }: Props) {
     <div className="space-y-6">
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="card-hover rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <p className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Total DB Size</p>
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
             {status.total_size_mb.toFixed(2)} MB
           </p>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="card-hover rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <p className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Total Tables</p>
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
             {status.total_tables}
           </p>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="card-hover rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <p className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">DB Version</p>
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
             {status.db_version}
           </p>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="card-hover rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <p className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Pending Cleanup</p>
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
             {pc.total.toLocaleString()}

@@ -60,8 +60,10 @@ export default function SitesList({ initialSites }: SitesListProps) {
       </div>
 
       {loading && (
-        <div className="mb-4 flex items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
+        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 rounded-2xl bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+          ))}
         </div>
       )}
 

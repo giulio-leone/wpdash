@@ -28,7 +28,7 @@ export default function SiteCard({ site, onDelete, onRegenerate }: SiteCardProps
   return (
     <div
       className={cn(
-        "rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md",
+        "card-hover rounded-2xl border border-gray-200 bg-white p-5",
         "dark:border-gray-800 dark:bg-gray-900",
       )}
     >

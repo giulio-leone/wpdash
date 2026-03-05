@@ -87,8 +87,15 @@ export default function SeoDetails({ siteId, refreshKey }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+      <div className="space-y-3">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="flex gap-4 border-b border-gray-100 dark:border-gray-800 py-3">
+            <div className="h-5 w-40 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+            <div className="h-5 w-24 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+            <div className="h-5 w-16 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+            <div className="h-5 flex-1 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+          </div>
+        ))}
       </div>
     );
   }

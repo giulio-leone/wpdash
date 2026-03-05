@@ -52,7 +52,7 @@ function MetricCard({
   prefix?: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+    <div className="card-hover rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
       <p className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">{label}</p>
       <p className="text-2xl font-semibold text-gray-900 dark:text-white">
         {prefix}
@@ -143,8 +143,13 @@ export default function WooCommerceHub({ siteId }: Props) {
 
   if (statsLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[1,2,3,4].map((i) => (
+            <div key={i} className="h-20 rounded-xl bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+          ))}
+        </div>
+        <div className="h-40 rounded-xl bg-gray-200 animate-pulse dark:bg-gray-700/60" />
       </div>
     );
   }

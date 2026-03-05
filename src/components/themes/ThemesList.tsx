@@ -50,8 +50,12 @@ export default function ThemesList({ siteId }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-40 rounded-xl bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -74,7 +78,7 @@ export default function ThemesList({ siteId }: Props) {
             <div
               key={theme.slug}
               className={cn(
-                "rounded-xl border bg-white p-4 shadow-sm",
+                "card-hover rounded-xl border bg-white p-4 shadow-sm",
                 "dark:border-gray-800 dark:bg-gray-900",
                 theme.is_active && "ring-2 ring-brand-500",
               )}

@@ -229,9 +229,9 @@ export default function SiteDetailClient({ site }: { site: Site }) {
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{value}</p>
+    <div className="card-hover rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">{label}</p>
+      <p className="mt-1.5 text-sm font-semibold text-gray-900 dark:text-white">{value}</p>
     </div>
   );
 }

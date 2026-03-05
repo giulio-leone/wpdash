@@ -373,8 +373,50 @@
     cursor: pointer;
   }
   body {
-    @apply font-outfit relative z-1 bg-gray-50 font-normal;
+    @apply font-outfit relative z-1 bg-gray-50 font-normal antialiased;
+    @apply transition-colors duration-200;
   }
+  .dark body {
+    @apply bg-gray-950;
+  }
+}
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-200) 25%,
+    var(--color-gray-100) 50%,
+    var(--color-gray-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.06) 25%,
+    rgba(255,255,255,0.10) 50%,
+    rgba(255,255,255,0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Micro-animations — hover lift on interactive cards */
+@utility card-hover {
+  @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-theme-md;
+}
+
+/* Smooth table row hover */
+@utility table-row-hover {
+  @apply transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-white/[0.02];
 }
 
 @utility menu-item {

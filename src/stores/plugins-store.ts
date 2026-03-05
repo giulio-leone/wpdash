@@ -12,6 +12,7 @@ import {
   installPlugin,
 } from "@/application/plugin/plugin-actions";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/client";
+import { toast } from "@/hooks/useToast";
 
 type PluginAction = "activate" | "deactivate" | "update" | "delete";
 
@@ -61,12 +62,15 @@ export const usePluginsStore = create<PluginsState>((set, get) => ({
       const result = await syncSitePlugins(siteId);
       if (result.success) {
         set((s) => ({ plugins: { ...s.plugins, [siteId]: result.data } }));
+        toast.success(`Synced ${result.data.length} plugins`);
       } else {
         set((s) => ({ error: { ...s.error, [siteId]: result.error } }));
+        toast.error(result.error ?? "Sync failed");
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to sync plugins";
       set((s) => ({ error: { ...s.error, [siteId]: msg } }));
+      toast.error(msg);
     } finally {
       set((s) => ({ syncing: { ...s.syncing, [siteId]: false } }));
     }
@@ -86,7 +90,15 @@ export const usePluginsStore = create<PluginsState>((set, get) => ({
 
     if (!result.success) {
       set((s) => ({ error: { ...s.error, [siteId]: result.error } }));
+      toast.error(result.error ?? `Failed to ${action} plugin`);
     } else {
+      const labels: Record<typeof action, string> = {
+        activate: "Plugin activated",
+        deactivate: "Plugin deactivated",
+        update: "Plugin updated successfully",
+        delete: "Plugin deleted",
+      };
+      toast.success(labels[action]);
       await get().fetchPlugins(siteId);
     }
     set((s) => ({ actionLoading: { ...s.actionLoading, [siteId]: null } }));
@@ -95,7 +107,10 @@ export const usePluginsStore = create<PluginsState>((set, get) => ({
   installPlugin: async (siteId, source, value) => {
     const result = await installPlugin(siteId, source, value);
     if (result.success) {
+      toast.success("Plugin installed successfully");
       await get().fetchPlugins(siteId);
+    } else {
+      toast.error(result.error ?? "Installation failed");
     }
     return result.success ? undefined : Promise.reject(new Error(result.error));
   },

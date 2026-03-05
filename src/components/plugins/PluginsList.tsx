@@ -7,6 +7,7 @@ import Button from "@/components/ui/button/Button";
 import PluginInstallModal from "./PluginInstallModal";
 import BulkUpdatePanel from "./BulkUpdatePanel";
 import { usePluginsStore } from "@/stores/plugins-store";
+import { SkeletonTable } from "@/components/ui/skeleton/Skeleton";
 import type { SitePlugin } from "@/domain/plugin/entity";
 
 // Stable empty array — prevents infinite re-render when siteId not yet in store
@@ -46,8 +47,15 @@ export default function PluginsList({ siteId }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="h-9 w-full rounded-lg bg-gray-200 animate-pulse dark:bg-gray-700/60 sm:max-w-[16rem]" />
+          <div className="flex gap-2">
+            <div className="h-8 w-28 rounded-lg bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+            <div className="h-8 w-28 rounded-lg bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+          </div>
+        </div>
+        <SkeletonTable rows={4} cols={5} />
       </div>
     );
   }
@@ -107,7 +115,7 @@ export default function PluginsList({ siteId }: Props) {
               {filtered.map((plugin) => (
                 <tr
                   key={plugin.slug}
-                  className="border-b border-gray-100 dark:border-gray-800"
+                  className="table-row-hover border-b border-gray-100 dark:border-gray-800"
                 >
                   <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">
                     {plugin.name}

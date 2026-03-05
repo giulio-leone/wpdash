@@ -92,8 +92,15 @@ export default function ContentList({ siteId }: Props) {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex gap-4 border-b border-gray-100 dark:border-gray-800 py-3">
+              <div className="h-5 w-40 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+              <div className="h-5 w-24 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+              <div className="h-5 w-16 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+              <div className="h-5 flex-1 rounded-md bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+            </div>
+          ))}
         </div>
       ) : items.length === 0 ? (
         <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -114,7 +121,7 @@ export default function ContentList({ siteId }: Props) {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800">
+                <tr key={item.id} className="table-row-hover border-b border-gray-100 dark:border-gray-800">
                   <td className="py-3 pr-4">
                     <a
                       href={item.url}

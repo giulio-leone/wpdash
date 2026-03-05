@@ -48,8 +48,10 @@ export default function SeoWidget({ siteId, onAuditComplete }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+      <div className="space-y-3">
+        <div className="h-8 w-3/4 rounded-lg bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+        <div className="h-8 w-1/2 rounded-lg bg-gray-200 animate-pulse dark:bg-gray-700/60" />
+        <div className="h-8 w-2/3 rounded-lg bg-gray-200 animate-pulse dark:bg-gray-700/60" />
       </div>
     );
   }
