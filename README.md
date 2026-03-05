@@ -4,7 +4,7 @@
 
 ![version](https://img.shields.io/badge/version-0.1.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
-![license](https://img.shields.io/badge/license-MIT-green)
+![license](https://img.shields.io/badge/license-BSL%201.1-orange)
 ![node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)
 ![status](https://img.shields.io/badge/status-experimental-orange)
 
@@ -219,6 +219,12 @@ Full documentation is built with **[Docusaurus](https://docusaurus.io)** and cov
 
 ## License
 
-WP Dash is released under the **MIT License**. See [LICENSE](./LICENSE) for details.
+WP Dash is released under the **[Business Source License 1.1 (BSL 1.1)](./LICENSE)**.
+
+**Key terms:**
+- ✅ Free for non-production use (local dev, evaluation, study)
+- ❌ **No production or SaaS use** without a commercial license (Additional Use Grant: None)
+- 📅 Converts to **GPL-3.0-or-later** on **March 5, 2030**
+- 📧 Commercial licenses: [giulio@wpdash.io](mailto:giulio@wpdash.io)
 
 The WordPress plugins (`wp-bridge-plugin`, `wp-wpdash-plugin`) are released under the **GPL-2.0-or-later** license, as required by the WordPress plugin ecosystem.

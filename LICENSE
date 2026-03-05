@@ -1,126 +1,103 @@
-WP DASH SOURCE-AVAILABLE LICENSE
-Version 1.0 — Effective Date: March 5, 2026
+Business Source License 1.1
 
-Copyright (c) 2026 Giulio Leone. All rights reserved.
+Parameters
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Licensor:             Giulio Leone
+Licensed Work:        WP Dash
+                      The Licensed Work is (c) 2026 Giulio Leone. All rights reserved.
+Additional Use Grant: None
+Change Date:          March 5, 2030
+Change License:       GNU General Public License v3.0 or later (GPL-3.0-or-later)
 
-1. GRANT OF LIMITED LICENSE
+For information about alternative licensing arrangements for the Licensed Work,
+including commercial licenses, contact:
 
-Subject to the terms and conditions of this License, the copyright
-holder grants you a limited, non-exclusive, non-transferable,
-non-sublicensable, revocable license to:
+  Giulio Leone — giulio@wpdash.io
 
-  (a) view and study the source code for personal, educational,
-      and non-commercial purposes only;
-  (b) run the software locally in a non-production environment
-      for personal evaluation purposes only.
+Notice
 
-2. PERMITTED USE
+Business Source License 1.1
+License text copyright (c) 2017 MariaDB Corporation Ab, All Rights Reserved.
+"Business Source License" is a trademark of MariaDB Corporation Ab.
 
-The only permitted use under this License is:
+-------------------------------------------------------------------------------
 
-  Personal, non-production use — meaning use on a local or
-  development machine exclusively by the individual who obtained
-  this software, with no revenue, commercial benefit, or
-  production traffic of any kind involved.
+Terms
 
-3. PROHIBITED USES
+The Licensor hereby grants you the right to copy, modify, create derivative
+works, redistribute, and make non-production use of the Licensed Work. The
+Licensor may make an Additional Use Grant, above, permitting limited
+production use.
 
-Without a separate written commercial license agreement signed by
-the copyright holder, the following uses are expressly prohibited:
+Effective on the Change Date, or the fourth anniversary of the first publicly
+available distribution of a specific version of the Licensed Work under this
+License, whichever comes first, the Licensor hereby grants you rights under
+the terms of the Change License, and the rights granted in the preceding
+paragraph terminate.
 
-  (a) any commercial use, including but not limited to: offering
-      the software as a service (SaaS), reselling, sublicensing,
-      incorporating into a paid product or service;
-  (b) deployment in any production environment, regardless of
-      whether revenue is generated;
-  (c) use by or on behalf of any company, organization, or
-      third party;
-  (d) distribution, redistribution, or publication of the
-      software or any derivative works;
-  (e) removal or modification of this license, copyright
-      notices, or attribution.
+If your use of the Licensed Work does not comply with the requirements
+currently in effect as described in this License, you must purchase a
+commercial license from the Licensor, its affiliated entities, or authorized
+resellers, or you must refrain from using the Licensed Work.
 
-4. FUTURE LICENSE VERSIONS
+All copies of the original and modified Licensed Work, and derivative works
+of the Licensed Work, are subject to this License. This License applies
+separately for each version of the Licensed Work and the Change Date may vary
+for each version of the Licensed Work released by Licensor.
 
-BY USING, ACCESSING, CLONING, FORKING, OR DOWNLOADING THIS
-SOFTWARE, YOU EXPLICITLY AGREE THAT:
+You must conspicuously display this License on each original or modified copy
+of the Licensed Work. If you receive a copy of the Licensed Work in another
+form, you must provide a copy of this License.
 
-  (a) A new version of this License will be published within
-      1 to 4 weeks from the Effective Date above
-      (i.e., by no later than April 2, 2026);
+Any use of the Licensed Work in violation of this License will automatically
+terminate your rights under this License for the current and all other
+versions of the Licensed Work.
 
-  (b) The new license version may introduce additional
-      restrictions, commercial terms, pricing requirements,
-      or convert this software to a fully proprietary,
-      paid-only model;
+This License does not grant you any right in any trademark or logo of
+Licensor or its affiliates (provided that you may use a trademark or logo of
+Licensor as expressly required by this License).
 
-  (c) You automatically agree to be bound by any new license
-      version published within the window defined in (a),
-      without any further action or notice required;
+TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED WORK IS PROVIDED ON
+AN "AS IS" BASIS. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS,
+EXPRESS OR IMPLIED, INCLUDING (WITHOUT LIMITATION) WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND
+TITLE.
 
-  (d) Continued use of the software after a new license is
-      published constitutes unconditional acceptance of its terms.
+MariaDB hereby grants you permission to use this License's text to license
+your works, and to refer to it using the trademark "Business Source License",
+as long as you comply with the Covenants of Licensor below.
 
-5. OWNERSHIP AND INTELLECTUAL PROPERTY
+Covenants of Licensor
 
-The copyright holder retains all rights, title, and interest in
-and to the software, including all intellectual property rights,
-commercial rights, and rights to exploit the software in any form
-and through any medium, worldwide, in perpetuity.
+In consideration of the right to use this License's text and the "Business
+Source License" name and trademark, Licensor covenants to MariaDB, and to
+all recipients of the licensed work to be provided by Licensor:
 
-Nothing in this License transfers or grants any ownership rights
-to any user or contributor.
+1. To specify as the Change License the GPL Version 2.0 or any later version,
+   or a license that is compatible with GPL Version 2.0 or a later version,
+   where "compatible" means that software provided under the Change License
+   can be included in a program with software provided under GPL Version 2.0
+   or a later version. Licensor may specify additional requirements that must
+   be met by the Change License.
 
-6. NO WARRANTY
+2. To either: (a) specify an additional grant of rights to use that does not
+   impose any additional restriction on the rights granted in the License, as
+   the Additional Use Grant; or (b) insert the text "None" in the space of
+   the Additional Use Grant.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
-NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE
-LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, OR
-IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+3. To specify a Change Date.
 
-7. LIMITATION OF LIABILITY
+4. Not to modify this License in any other way.
 
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT
-SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING BUT NOT
-LIMITED TO LOSS OF DATA, LOSS OF PROFITS, OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT, EVEN IF ADVISED
-OF THE POSSIBILITY OF SUCH DAMAGE.
+-------------------------------------------------------------------------------
 
-8. TERMINATION
+Notice Regarding SaaS and Production Use
 
-This License and the rights granted hereunder will terminate
-automatically upon any breach by you of the terms of this License.
-Upon termination, you must destroy all copies of the software in
-your possession.
+The Additional Use Grant for this Licensed Work is set to "None". This means
+that ANY production use — including, without limitation, offering the Licensed
+Work as a Software-as-a-Service (SaaS) product, a hosted service, a managed
+service, a cloud product, or any deployment that serves external users or
+generates revenue — is expressly prohibited without a separate written
+commercial license agreement executed by the Licensor.
 
-9. GOVERNING LAW
-
-This License shall be governed by and construed in accordance with
-Italian law, without regard to its conflict of law provisions.
-Any disputes arising under this License shall be subject to the
-exclusive jurisdiction of the courts of Italy.
-
-10. CONTACT
-
-For commercial licensing inquiries or permissions beyond the scope
-of this License, contact:
-
-  Giulio Leone
-  giulio@wpdash.io
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TLDR (not legally binding):
-- You can look at and study the code.
-- You CANNOT use it in production or commercially.
-- A new (possibly paid) license is coming by April 2, 2026.
-- By using this software you automatically accept that future license.
-- No warranty. All rights reserved.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+To obtain a commercial license, contact: giulio@wpdash.io

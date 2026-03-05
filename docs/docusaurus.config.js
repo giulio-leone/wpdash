@@ -86,7 +86,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} WP Dash. MIT License.`,
+        copyright: `Copyright © ${new Date().getFullYear()} WP Dash. Business Source License 1.1.`,
       },
       prism: {
         theme: require('prism-react-renderer').themes.github,
