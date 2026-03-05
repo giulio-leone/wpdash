@@ -1,21 +1,126 @@
-MIT License
+WP DASH SOURCE-AVAILABLE LICENSE
+Version 1.0 — Effective Date: March 5, 2026
 
-Copyright (c) 2023 TailAdmin
+Copyright (c) 2026 Giulio Leone. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. GRANT OF LIMITED LICENSE
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Subject to the terms and conditions of this License, the copyright
+holder grants you a limited, non-exclusive, non-transferable,
+non-sublicensable, revocable license to:
+
+  (a) view and study the source code for personal, educational,
+      and non-commercial purposes only;
+  (b) run the software locally in a non-production environment
+      for personal evaluation purposes only.
+
+2. PERMITTED USE
+
+The only permitted use under this License is:
+
+  Personal, non-production use — meaning use on a local or
+  development machine exclusively by the individual who obtained
+  this software, with no revenue, commercial benefit, or
+  production traffic of any kind involved.
+
+3. PROHIBITED USES
+
+Without a separate written commercial license agreement signed by
+the copyright holder, the following uses are expressly prohibited:
+
+  (a) any commercial use, including but not limited to: offering
+      the software as a service (SaaS), reselling, sublicensing,
+      incorporating into a paid product or service;
+  (b) deployment in any production environment, regardless of
+      whether revenue is generated;
+  (c) use by or on behalf of any company, organization, or
+      third party;
+  (d) distribution, redistribution, or publication of the
+      software or any derivative works;
+  (e) removal or modification of this license, copyright
+      notices, or attribution.
+
+4. FUTURE LICENSE VERSIONS
+
+BY USING, ACCESSING, CLONING, FORKING, OR DOWNLOADING THIS
+SOFTWARE, YOU EXPLICITLY AGREE THAT:
+
+  (a) A new version of this License will be published within
+      1 to 4 weeks from the Effective Date above
+      (i.e., by no later than April 2, 2026);
+
+  (b) The new license version may introduce additional
+      restrictions, commercial terms, pricing requirements,
+      or convert this software to a fully proprietary,
+      paid-only model;
+
+  (c) You automatically agree to be bound by any new license
+      version published within the window defined in (a),
+      without any further action or notice required;
+
+  (d) Continued use of the software after a new license is
+      published constitutes unconditional acceptance of its terms.
+
+5. OWNERSHIP AND INTELLECTUAL PROPERTY
+
+The copyright holder retains all rights, title, and interest in
+and to the software, including all intellectual property rights,
+commercial rights, and rights to exploit the software in any form
+and through any medium, worldwide, in perpetuity.
+
+Nothing in this License transfers or grants any ownership rights
+to any user or contributor.
+
+6. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE
+LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+7. LIMITATION OF LIABILITY
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT
+SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING BUT NOT
+LIMITED TO LOSS OF DATA, LOSS OF PROFITS, OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+8. TERMINATION
+
+This License and the rights granted hereunder will terminate
+automatically upon any breach by you of the terms of this License.
+Upon termination, you must destroy all copies of the software in
+your possession.
+
+9. GOVERNING LAW
+
+This License shall be governed by and construed in accordance with
+Italian law, without regard to its conflict of law provisions.
+Any disputes arising under this License shall be subject to the
+exclusive jurisdiction of the courts of Italy.
+
+10. CONTACT
+
+For commercial licensing inquiries or permissions beyond the scope
+of this License, contact:
+
+  Giulio Leone
+  giulio@wpdash.io
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TLDR (not legally binding):
+- You can look at and study the code.
+- You CANNOT use it in production or commercially.
+- A new (possibly paid) license is coming by April 2, 2026.
+- By using this software you automatically accept that future license.
+- No warranty. All rights reserved.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
