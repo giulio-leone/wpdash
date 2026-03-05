@@ -1,5 +1,7 @@
 "use server";
 
+import { getCurrentUserId } from "@/lib/server-auth";
+
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import { DrizzleLogRepository } from "@/infrastructure/database/repositories/log-repository-impl";
@@ -20,13 +22,6 @@ const siteRepo = new DrizzleSiteRepository();
 const logRepo = new DrizzleLogRepository();
 const bridge = new WPBridgeClient();
 
-async function getCurrentUserId(): Promise<string | null> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
 
 async function getSiteForUser(siteId: string) {
   const userId = await getCurrentUserId();

@@ -1,5 +1,7 @@
 "use server";
 
+import { getCurrentUserId } from "@/lib/server-auth";
+
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import { DrizzleUptimeRepository } from "@/infrastructure/database/repositories/uptime-repository-impl";
@@ -24,13 +26,6 @@ const seoRepo = new DrizzleSeoRepository();
 const backupRepo = new DrizzleBackupRepository();
 const logRepo = new DrizzleLogRepository();
 
-async function getCurrentUserId(): Promise<string | null> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
 
 export interface NetworkOverview {
   totalSites: number;

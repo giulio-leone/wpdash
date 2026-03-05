@@ -1,5 +1,7 @@
 "use server";
 
+import { getCurrentUserId } from "@/lib/server-auth";
+
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { db } from "@/infrastructure/database/drizzle-client";
 import { organizations, orgMembers, userPlans } from "@/infrastructure/database/schemas";
@@ -7,13 +9,6 @@ import { sites } from "@/infrastructure/database/schemas/sites";
 import { eq, and, sql } from "drizzle-orm";
 import crypto from "crypto";
 
-async function getCurrentUserId(): Promise<string | null> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
 
 // Get the current user's plan (creates free plan if doesn't exist)
 export async function getUserPlan() {

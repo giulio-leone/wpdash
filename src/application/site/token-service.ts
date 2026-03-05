@@ -1,6 +1,8 @@
+"use server";
+
 import crypto from "crypto";
 
-export function generateSiteToken(): string {
+export async function generateSiteToken(): Promise<string> {
   return `wpdash_${crypto.randomBytes(32).toString("hex")}`;
 }
 

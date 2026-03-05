@@ -1,5 +1,7 @@
 "use server";
 
+import { getCurrentUserId } from "@/lib/server-auth";
+
 import { eq, and } from "drizzle-orm";
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzlePluginRepository } from "@/infrastructure/database/repositories/plugin-repository-impl";
@@ -22,13 +24,6 @@ export interface BulkUpdateResult {
 const repo = new DrizzlePluginRepository();
 const bridge = new WPBridgeClient();
 
-async function getCurrentUserId(): Promise<string | null> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
 
 async function getSiteConnection(siteId: string, userId: string) {
   const rows = await db

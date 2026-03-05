@@ -1,5 +1,7 @@
 "use server";
 
+import { getCurrentUserId } from "@/lib/server-auth";
+
 import { eq, and } from "drizzle-orm";
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { db } from "@/infrastructure/database/drizzle-client";
@@ -12,13 +14,6 @@ import type {
 } from "@/infrastructure/wp-bridge/types";
 
 const bridge = new WPBridgeClient();
-
-async function getCurrentUserId(): Promise<string | null> {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
-
 async function getSiteConnection(siteId: string, userId: string) {
   const rows = await db
     .select({ url: sites.url, tokenHash: sites.tokenHash })

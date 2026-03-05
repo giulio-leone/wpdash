@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "A site with this URL already exists" }, { status: 409 });
   }
 
-  const token = generateSiteToken();
+  const token = await generateSiteToken();
   const tokenHash = await hashToken(token);
   const site = await repo.create({ userId: user.id, name, url }, tokenHash);
 

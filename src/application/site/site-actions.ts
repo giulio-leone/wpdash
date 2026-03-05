@@ -1,5 +1,7 @@
 "use server";
 
+import { getCurrentUserId } from "@/lib/server-auth";
+
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import { generateSiteToken } from "./token-service";
@@ -17,13 +19,6 @@ type ActionResult<T = void> =
 
 const repo = new DrizzleSiteRepository();
 
-async function getCurrentUserId(): Promise<string | null> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
 
 export async function createSite(
   formData: FormData,
@@ -54,7 +49,7 @@ export async function createSite(
     };
   }
 
-  const token = generateSiteToken();
+  const token = await generateSiteToken();
   // Store raw token in DB — bridge validates by hashing: SHA-256(bearer) == stored_hash
   // The tokenHash column stores the raw token so dashboard can call bridge
   const site = await repo.create({ userId, name, url }, token);
@@ -115,7 +110,7 @@ export async function regenerateToken(
     return { success: false, error: "Site not found" };
   }
 
-  const token = generateSiteToken();
+  const token = await generateSiteToken();
   // Store raw token for bridge communication
   await repo.updateTokenHash(siteId, token);
 

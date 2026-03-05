@@ -1,5 +1,7 @@
 "use server";
 
+import { getCurrentUserId } from "@/lib/server-auth";
+
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleUptimeRepository } from "@/infrastructure/database/repositories/uptime-repository-impl";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
@@ -14,13 +16,6 @@ type ActionResult<T = void> =
 const uptimeRepo = new DrizzleUptimeRepository();
 const siteRepo = new DrizzleSiteRepository();
 
-async function getCurrentUserId(): Promise<string | null> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
 
 async function verifySiteOwnership(siteId: string, userId: string) {
   const site = await siteRepo.findById(siteId);
