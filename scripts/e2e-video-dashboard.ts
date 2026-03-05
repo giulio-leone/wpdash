@@ -118,6 +118,12 @@ async function setupAccount(): Promise<{ siteId: string }> {
   });
   const [{ id: siteId }] = (await site.json()) as [{ id: string }];
 
+  // Ensure pretty permalinks are enabled (required for /wp-json/ routes)
+  try {
+    execSync("docker exec wpdash-test-wp wp rewrite structure '/%postname%/' --allow-root", { stdio: "ignore" });
+    execSync("docker exec wpdash-test-wp wp rewrite flush --hard --allow-root", { stdio: "ignore" });
+  } catch { /* ok */ }
+
   // Ensure only the hello-dolly/ directory plugin exists (remove legacy hello.php if present)
   // This avoids duplicate "Hello Dolly" entries after WP plugin updates
   try {
