@@ -960,9 +960,75 @@ async function main() {
     await sleep(2000);
 
     // ──────────────────────────────────────────────────────────
-    //  Scene 18 — Finale: Overview
+    //  Scene 18 — Connect New Site Wizard
     // ──────────────────────────────────────────────────────────
-    hr("Scene 18 — Finale: Overview");
+    hr("Scene 18 — Connect New Site Wizard");
+    await page.goto(`${DASHBOARD_URL}/connect`, { waitUntil: "domcontentloaded" });
+    await sleep(2000);
+    console.log("  👁  Connect wizard — Step 1: Welcome");
+    // Step 1: Welcome — click Get Started
+    const getStartedBtn = page.locator("button", { hasText: "Get Started" });
+    if (await getStartedBtn.count() > 0) {
+      await sleep(1500);
+      await getStartedBtn.first().click();
+      await sleep(1500);
+    }
+    // Step 2: Download — show download button, click "Downloaded"
+    console.log("  👁  Step 2: Download plugin");
+    await sleep(1500);
+    const downloadedBtn = page.locator("button", { hasText: "Downloaded" });
+    if (await downloadedBtn.count() > 0) {
+      await sleep(1500);
+      await downloadedBtn.first().click();
+      await sleep(1500);
+    }
+    // Step 3: Install & Token
+    console.log("  👁  Step 3: Install & activate");
+    await sleep(1500);
+    const hasTokenBtn = page.locator("button", { hasText: "I have my token" });
+    if (await hasTokenBtn.count() > 0) {
+      await sleep(2000);
+      await hasTokenBtn.first().click();
+      await sleep(1500);
+    }
+    // Step 4: Connect form
+    console.log("  👁  Step 4: Connect site form");
+    const nameInput = page.locator("input[placeholder='My WordPress Site']");
+    if (await nameInput.count() > 0) {
+      await nameInput.fill("My WordPress Blog");
+      await sleep(600);
+      const urlInput = page.locator("input[placeholder='https://yoursite.com']");
+      await urlInput.fill("https://myblog.com");
+      await sleep(600);
+      const tokenInput = page.locator("input[placeholder='Paste your token here']");
+      await tokenInput.fill("demo-token-abc123xyz");
+      await sleep(1500);
+    }
+    console.log("  ✅ Connect wizard walkthrough complete");
+    await sleep(2000);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 18b — MCP / AI Integration
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 18b — MCP / AI Integration");
+    await page.goto(`${DASHBOARD_URL}/mcp`, { waitUntil: "domcontentloaded" });
+    await sleep(3000);
+    // Scroll slowly down the MCP page to show the content
+    await page.evaluate(() => window.scrollBy({ top: 400, behavior: "smooth" }));
+    await sleep(1500);
+    await page.evaluate(() => window.scrollBy({ top: 400, behavior: "smooth" }));
+    await sleep(1500);
+    await page.evaluate(() => window.scrollBy({ top: 500, behavior: "smooth" }));
+    await sleep(2000);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    await sleep(1500);
+    console.log("  ✅ MCP page showcased");
+    await sleep(1500);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 19 — Finale: Overview
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 19 — Finale: Overview");
     await page.goto(`${DASHBOARD_URL}/sites`);
     await page.waitForLoadState("networkidle");
     await sleep(3000);
