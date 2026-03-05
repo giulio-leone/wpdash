@@ -278,6 +278,39 @@ async function main() {
     console.log("  ✅ Sites list visible");
 
     // ──────────────────────────────────────────────────────────
+    //  Scene 2b — Dark Mode Showcase
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 2b — Dark Mode Showcase");
+    // Toggle to dark mode
+    const themeToggle = page.locator('button[aria-label*="dark"], button[aria-label*="theme"], button[title*="dark"], button[title*="theme"]').first();
+    const hasToggle = await themeToggle.count() > 0;
+    if (hasToggle) {
+      await themeToggle.hover();
+      await sleep(600);
+      await themeToggle.click();
+      await sleep(3500);
+      // Toggle back to light
+      await themeToggle.hover();
+      await sleep(400);
+      await themeToggle.click();
+      await sleep(2500);
+      console.log("  ✅ Dark mode toggle demonstrated");
+    } else {
+      // Fallback: toggle via JS
+      await page.evaluate(() => {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("theme", "dark");
+      });
+      await sleep(3500);
+      await page.evaluate(() => {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("theme", "light");
+      });
+      await sleep(2000);
+      console.log("  ✅ Dark mode toggled (JS fallback)");
+    }
+
+    // ──────────────────────────────────────────────────────────
     //  Scene 3 — Site Detail: Overview
     // ──────────────────────────────────────────────────────────
     hr("Scene 3 — Site Detail: Overview");

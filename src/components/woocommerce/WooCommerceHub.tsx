@@ -258,7 +258,7 @@ export default function WooCommerceHub({ siteId }: Props) {
                 </thead>
                 <tbody>
                   {orders.map((order) => (
-                    <tr key={order.id} className="border-b border-gray-100 dark:border-gray-800">
+                    <tr key={order.id} className="table-row-hover border-b border-gray-100 dark:border-gray-800">
                       <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">
                         #{order.number}
                       </td>
@@ -348,7 +348,7 @@ export default function WooCommerceHub({ siteId }: Props) {
                 </thead>
                 <tbody>
                   {products.map((product) => (
-                    <tr key={product.id} className="border-b border-gray-100 dark:border-gray-800">
+                    <tr key={product.id} className="table-row-hover border-b border-gray-100 dark:border-gray-800">
                       <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">
                         {product.name}
                       </td>
