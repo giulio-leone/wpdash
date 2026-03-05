@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Ask a Question / Discussion
+    url: https://github.com/giulio-leone/wpdash/discussions
+    about: For general questions and community discussions.
+  - name: 🔒 Report a Security Vulnerability
+    url: https://github.com/giulio-leone/wpdash/security/advisories/new
+    about: Do NOT use public issues for security vulnerabilities. Use private reporting.
+  - name: 💼 Commercial License Inquiry
+    url: https://giulioleone.com
+    about: For production use, SaaS deployments, or enterprise licensing.
