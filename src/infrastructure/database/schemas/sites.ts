@@ -11,6 +11,7 @@ export const sites = pgTable("sites", {
   lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
   wpVersion: varchar("wp_version", { length: 20 }),
   phpVersion: varchar("php_version", { length: 20 }),
+  orgId: uuid("org_id"), // nullable — personal sites have NULL, org sites have org_id
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

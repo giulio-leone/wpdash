@@ -1008,11 +1008,33 @@ async function main() {
     await sleep(2000);
 
     // ──────────────────────────────────────────────────────────
-    //  Scene 18b — MCP / AI Integration
+    //  Scene 18b — Organizations & Teams
     // ──────────────────────────────────────────────────────────
-    hr("Scene 18b — MCP / AI Integration");
-    await page.goto(`${DASHBOARD_URL}/mcp`, { waitUntil: "domcontentloaded" });
-    await sleep(3000);
+    hr("Scene 18b — Organizations & Teams");
+    await page.goto(`${DASHBOARD_URL}/organizations`, { waitUntil: "domcontentloaded" });
+    await sleep(2500);
+    // Show the create org form
+    const createOrgBtn = page.locator("button", { hasText: /Create|New Org/i });
+    if (await createOrgBtn.count() > 0) {
+      await sleep(1000);
+      await createOrgBtn.first().click();
+      await sleep(1000);
+    }
+    // Fill org name
+    const orgNameInput = page.locator("input[placeholder*='Org'], input[placeholder*='org'], input[placeholder*='name'], input[placeholder*='Name']").first();
+    if (await orgNameInput.count() > 0) {
+      await orgNameInput.fill("My Agency");
+      await sleep(800);
+    }
+    await sleep(2000);
+    console.log("  ✅ Organizations page showcased");
+    await sleep(1500);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 18c — MCP / AI Integration
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 18c — MCP / AI Integration");
+    await page.goto(`${DASHBOARD_URL}/mcp`, { waitUntil: "domcontentloaded" });    await sleep(3000);
     // Scroll slowly down the MCP page to show the content
     await page.evaluate(() => window.scrollBy({ top: 400, behavior: "smooth" }));
     await sleep(1500);

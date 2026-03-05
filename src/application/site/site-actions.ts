@@ -9,6 +9,7 @@ import { db } from "@/infrastructure/database/drizzle-client";
 import { sites as sitesSchema } from "@/infrastructure/database/schemas/sites";
 import { eq } from "drizzle-orm";
 import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
+import { canAddSite } from "@/application/organization/organization-actions";
 
 type ActionResult<T = void> =
   | { success: true; data: T }
@@ -43,6 +44,14 @@ export async function createSite(
   const existing = await repo.findByUrl(url, userId);
   if (existing) {
     return { success: false, error: "A site with this URL already exists" };
+  }
+
+  const quota = await canAddSite();
+  if (!quota.allowed) {
+    return {
+      success: false,
+      error: `You've reached your ${quota.plan} plan limit (${quota.limit} sites). Upgrade to Pro for unlimited sites.`,
+    };
   }
 
   const token = generateSiteToken();

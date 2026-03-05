@@ -15,6 +15,7 @@ import {
   BellIcon,
   BoltIcon,
   BoxCubeIcon,
+  GroupIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
 
@@ -65,6 +66,11 @@ const navItems: NavItem[] = [
     icon: <BoltIcon />,
     name: "MCP / AI",
     path: "/mcp",
+  },
+  {
+    icon: <GroupIcon />,
+    name: "Organizations",
+    path: "/organizations",
   },
 ];
 

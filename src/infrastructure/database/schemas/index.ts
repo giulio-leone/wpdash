@@ -9,6 +9,8 @@ export { siteLogs } from "./site-logs";
 export { backupRecords } from "./backup-records";
 export { notifications } from "./notifications";
 export { userSettings } from "./user-settings";
+export * from "./organizations";
+export * from "./user-plans";
 
 import { sites } from "./sites";
 import { uptimeChecks } from "./uptime-checks";
