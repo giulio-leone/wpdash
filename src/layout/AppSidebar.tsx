@@ -12,6 +12,7 @@ import {
   PlugInIcon,
   UserCircleIcon,
   DownloadIcon,
+  BellIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
 
@@ -47,6 +48,11 @@ const navItems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Profile",
     path: "/profile",
+  },
+  {
+    icon: <BellIcon />,
+    name: "Alert Settings",
+    path: "/settings",
   },
 ];
 

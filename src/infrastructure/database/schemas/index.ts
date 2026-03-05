@@ -8,6 +8,7 @@ export { seoAudits } from "./seo-audits";
 export { siteLogs } from "./site-logs";
 export { backupRecords } from "./backup-records";
 export { notifications } from "./notifications";
+export { userSettings } from "./user-settings";
 
 import { sites } from "./sites";
 import { uptimeChecks } from "./uptime-checks";

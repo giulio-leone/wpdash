@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { DrizzleUptimeRepository } from "@/infrastructure/database/repositories/uptime-repository-impl";
 import { DrizzleSiteRepository } from "@/infrastructure/database/repositories/site-repository-impl";
 import { UPTIME_CHECK_TIMEOUT_MS, UPTIME_RETENTION_DAYS } from "@/lib/constants";
+import { maybeNotifyOffline } from "@/application/notifications/notification-actions";
 import type { UptimeCheck } from "@/domain/uptime/entity";
 
 type ActionResult<T = void> =
@@ -69,6 +70,10 @@ export async function checkSiteUptime(
     errorMessage,
     checkedAt: new Date(),
   });
+
+  if (!isReachable) {
+    await maybeNotifyOffline(userId, siteId, site.name).catch(() => {});
+  }
 
   return { success: true, data: check };
 }

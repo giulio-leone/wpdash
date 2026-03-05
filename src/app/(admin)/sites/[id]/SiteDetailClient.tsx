@@ -22,6 +22,7 @@ import ContentList from "@/components/content/ContentList";
 import WooCommerceHub from "@/components/woocommerce/WooCommerceHub";
 import DatabaseManager from "@/components/database/DatabaseManager";
 import UpdatesPanel from "@/components/updates/UpdatesPanel";
+import HealthScoreWidget from "@/components/health/HealthScoreWidget";
 import { cn } from "@/lib/cn";
 
 const tabs = ["Overview", "Uptime", "Security", "Plugins", "SEO", "Logs", "Backup", "Themes", "Users", "Content", "WooCommerce", "Database", "Updates"] as const;
@@ -155,28 +156,36 @@ export default function SiteDetailClient({ site }: { site: Site }) {
       {/* Tab content */}
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         {activeTab === "Overview" ? (
-          <div className="space-y-4">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Site Health</h3>
-            {healthLoading ? (
-              <p className="text-sm text-gray-500">Fetching health data from WordPress…</p>
-            ) : healthData.wpVersion ? (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                <InfoCard label="WordPress" value={healthData.wpVersion} />
-                <InfoCard label="PHP" value={healthData.phpVersion ?? "—"} />
-                <InfoCard label="Status" value={site.status ?? "unknown"} />
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">Health Score</h3>
+                <HealthScoreWidget siteId={site.id} />
               </div>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Could not reach the WordPress site. Ensure the WP Bridge plugin is installed and the token is configured.
-              </p>
-            )}
-            <button
-              onClick={loadHealth}
-              disabled={healthLoading}
-              className="mt-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
-            >
-              {healthLoading ? "Checking…" : "Refresh Health"}
-            </button>
+              <div>
+                <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">Site Info</h3>
+                {healthLoading ? (
+                  <p className="text-sm text-gray-500">Fetching health data from WordPress…</p>
+                ) : healthData.wpVersion ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <InfoCard label="WordPress" value={healthData.wpVersion} />
+                    <InfoCard label="PHP" value={healthData.phpVersion ?? "—"} />
+                    <InfoCard label="Status" value={site.status ?? "unknown"} />
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Could not reach the WordPress site. Ensure the WP Bridge plugin is installed and the token is configured.
+                  </p>
+                )}
+                <button
+                  onClick={loadHealth}
+                  disabled={healthLoading}
+                  className="mt-4 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+                >
+                  {healthLoading ? "Checking…" : "Refresh Health"}
+                </button>
+              </div>
+            </div>
           </div>
         ) : activeTab === "Uptime" ? (
           <div className="space-y-6">

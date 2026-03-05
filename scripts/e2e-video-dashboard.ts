@@ -869,6 +869,59 @@ async function main() {
     await sleep(3000);
 
     // ──────────────────────────────────────────────────────────
+    //  Scene 17b — Health Score in Overview
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 17b — Site Health Score");
+    // Navigate back to site detail overview to show the health score widget
+    await page.goto(`${DASHBOARD_URL}/sites`);
+    await page.waitForLoadState("networkidle");
+    await sleep(1000);
+    const siteForHealth = page.locator(`a[href*="/sites/"]`).first();
+    if (await siteForHealth.count() > 0) {
+      await siteForHealth.click();
+      await page.waitForLoadState("networkidle");
+      await sleep(4000);
+      console.log("  ✅ Overview with health score loaded");
+      // Scroll down slightly to reveal health score widget if needed
+      await page.evaluate(() => window.scrollBy(0, 200));
+      await sleep(2000);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 17c — Alert Settings
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 17c — Alert Settings");
+    await page.goto(`${DASHBOARD_URL}/settings`);
+    await page.waitForLoadState("networkidle");
+    await sleep(3000);
+    console.log("  ✅ Settings page loaded");
+
+    // Toggle one alert setting off and back on
+    const toggles = page.locator('input[type="checkbox"], button[role="switch"]');
+    if (await toggles.count() > 0) {
+      const firstToggle = toggles.first();
+      await firstToggle.scrollIntoViewIfNeeded();
+      await firstToggle.hover();
+      await sleep(500);
+      await firstToggle.click();
+      await sleep(1000);
+      await firstToggle.click();
+      await sleep(1000);
+      console.log("  ✅ Alert toggle demonstrated");
+    }
+
+    // Save settings
+    const saveBtn = page.getByRole("button", { name: /save/i }).first();
+    if (await saveBtn.count() > 0) {
+      await saveBtn.hover();
+      await sleep(500);
+      await saveBtn.click();
+      await sleep(2000);
+      console.log("  ✅ Settings saved");
+    }
+    await sleep(2000);
+
+    // ──────────────────────────────────────────────────────────
     //  Scene 18 — Finale: Overview
     // ──────────────────────────────────────────────────────────
     hr("Scene 18 — Finale: Overview");

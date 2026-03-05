@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Site } from "@/domain/site/entity";
 import Badge from "@/components/ui/badge/Badge";
+import HealthScoreBadge from "@/components/health/HealthScoreBadge";
+import { getSiteHealthScore, type HealthScore } from "@/application/health/health-score-actions";
 import { cn } from "@/lib/cn";
 
 interface SiteCardProps {
@@ -25,6 +27,11 @@ function statusDotClass(status: string): string {
 }
 
 export default function SiteCard({ site, onDelete, onRegenerate }: SiteCardProps) {
+  const [hs, setHs] = useState<HealthScore | null>(null);
+
+  useEffect(() => {
+    getSiteHealthScore(site.id).then(setHs);
+  }, [site.id]);
   return (
     <div
       className={cn(
@@ -44,9 +51,12 @@ export default function SiteCard({ site, onDelete, onRegenerate }: SiteCardProps
             {site.name}
           </Link>
         </div>
-        <Badge size="sm" color={statusColor(site.status)}>
-          {site.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {hs && <HealthScoreBadge score={hs.total} tier={hs.tier} size="sm" />}
+          <Badge size="sm" color={statusColor(site.status)}>
+            {site.status}
+          </Badge>
+        </div>
       </div>
 
       <a

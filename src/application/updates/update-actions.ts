@@ -5,6 +5,7 @@ import { WPBridgeClient } from "@/infrastructure/wp-bridge/wp-bridge-client";
 import { db } from "@/infrastructure/database/drizzle-client";
 import { sites } from "@/infrastructure/database/schemas/sites";
 import { eq, and } from "drizzle-orm";
+import { maybeNotifyUpdates } from "@/application/notifications/notification-actions";
 import type { BridgeUpdatesStatusResponse } from "@/infrastructure/wp-bridge/types";
 
 type ActionResult<T = void> =
@@ -39,6 +40,18 @@ export async function checkUpdates(
 
   try {
     const data = await bridge.getUpdatesStatus(conn.url, conn.token);
+    const totalUpdates =
+      (data.plugin_updates_count ?? 0) +
+      (data.theme_updates_count ?? 0) +
+      (data.wp_core?.available ? 1 : 0);
+    if (totalUpdates > 0) {
+      const supabase = await createSupabaseServerClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      const [site] = await db.select({ name: sites.name }).from(sites).where(eq(sites.id, siteId)).limit(1);
+      if (user && site) {
+        await maybeNotifyUpdates(user.id, siteId, site.name, totalUpdates).catch(() => {});
+      }
+    }
     return { success: true, data };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Failed to fetch updates" };
