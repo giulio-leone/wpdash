@@ -1,8 +1,12 @@
 /**
  * Dashboard.js – Overview of all connected sites with health status.
+ *
+ * Accepts an optional `sites` prop from App.js (shared state). Falls back to
+ * fetching on its own if not provided. Health is fetched in parallel for all
+ * sites. Calls `onBadgesUpdate` with {updates, security} counts when done.
  */
-import { useState, useEffect } from '@wordpress/element';
-import { Spinner } from '@wordpress/components';
+import { useState, useEffect, useCallback } from '@wordpress/element';
+import { Spinner, Button } from '@wordpress/components';
 import { apiGet, proxyGet } from '../../api';
 
 function StatCard( { value, label, className = '' } ) {
@@ -59,37 +63,53 @@ function SiteCard( { site, health, loading } ) {
 	);
 }
 
-export default function Dashboard() {
-	const [ sites, setSites ]     = useState( [] );
-	const [ healths, setHealths ] = useState( {} );
-	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ]     = useState( null );
+export default function Dashboard( { sites: sitesProp, onBadgesUpdate } ) {
+	const [ sites, setSites ]           = useState( sitesProp ?? [] );
+	const [ healths, setHealths ]       = useState( {} );
+	const [ loading, setLoading ]       = useState( ! sitesProp );
+	const [ refreshing, setRefreshing ] = useState( false );
+	const [ error, setError ]           = useState( null );
+	const [ lastChecked, setLastChecked ] = useState( null );
 
+	const fetchHealths = useCallback( async ( siteList ) => {
+		setHealths( {} );
+		setError( null );
+		const healthMap = {};
+		await Promise.all(
+			siteList.map( async ( site ) => {
+				try {
+					const h = await proxyGet( site.id, '/health' );
+					healthMap[ site.id ] = h;
+				} catch ( err ) {
+					healthMap[ site.id ] = { error: err.message };
+				}
+				setHealths( ( prev ) => ( { ...prev, [ site.id ]: healthMap[ site.id ] } ) );
+			} )
+		);
+		setLastChecked( new Date() );
+		// Update sidebar badges after all health data is in.
+		if ( onBadgesUpdate ) {
+			const updatesCount = siteList.filter( ( s ) => healthMap[ s.id ]?.plugin_updates > 0 ).length;
+			const secCount     = siteList.filter( ( s ) => healthMap[ s.id ]?.has_security_issues ).length;
+			onBadgesUpdate( { updates: updatesCount, security: secCount } );
+		}
+		return healthMap;
+	}, [ onBadgesUpdate ] );
+
+	// Initial load: use prop sites or fetch from API.
 	useEffect( () => {
 		let cancelled = false;
 
-		async function fetchAll() {
+		async function init() {
 			try {
-				const sitesData = await apiGet( '/sites' );
-				if ( cancelled ) return;
-				setSites( sitesData );
+				let siteList = sitesProp;
+				if ( ! siteList ) {
+					siteList = await apiGet( '/sites' );
+					if ( cancelled ) return;
+					setSites( siteList );
+				}
 				setLoading( false );
-
-				// Fetch health for each site in parallel.
-				const healthMap = {};
-				await Promise.all(
-					sitesData.map( async ( site ) => {
-						try {
-							const h = await proxyGet( site.id, '/health' );
-							healthMap[ site.id ] = h;
-						} catch ( err ) {
-							healthMap[ site.id ] = { error: err.message };
-						}
-						if ( ! cancelled ) {
-							setHealths( ( prev ) => ( { ...prev, [ site.id ]: healthMap[ site.id ] } ) );
-						}
-					} )
-				);
+				await fetchHealths( siteList );
 			} catch ( err ) {
 				if ( ! cancelled ) {
 					setError( err.message );
@@ -98,9 +118,15 @@ export default function Dashboard() {
 			}
 		}
 
-		fetchAll();
+		init();
 		return () => { cancelled = true; };
-	}, [] );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	async function handleRefresh() {
+		setRefreshing( true );
+		await fetchHealths( sites ).catch( ( err ) => setError( err.message ) );
+		setRefreshing( false );
+	}
 
 	if ( loading ) {
 		return (
@@ -123,7 +149,23 @@ export default function Dashboard() {
 		<div>
 			<div className="wp-dash-screen-header">
 				<h2>Dashboard</h2>
-				<p>Overview of all connected WordPress sites.</p>
+				<div style={ { display: 'flex', alignItems: 'center', gap: 12 } }>
+					<p style={ { margin: 0 } }>Overview of all connected WordPress sites.</p>
+					{ lastChecked && (
+						<span style={ { fontSize: 11, color: '#646970' } }>
+							Last checked: { lastChecked.toLocaleTimeString() }
+						</span>
+					) }
+					<Button
+						variant="secondary"
+						size="small"
+						isBusy={ refreshing }
+						disabled={ refreshing }
+						onClick={ handleRefresh }
+					>
+						↻ Refresh
+					</Button>
+				</div>
 			</div>
 
 			<div className="wp-dash-summary-row">

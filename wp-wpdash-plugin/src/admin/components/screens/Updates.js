@@ -1,22 +1,27 @@
 /**
  * Updates.js – Aggregate update status across all connected sites.
+ *
+ * Improvements: accepts shared `sites` prop, adds a sequential
+ * "Update All Sites" button that processes one site at a time.
  */
 import { useState, useEffect } from '@wordpress/element';
 import { Button, Spinner, Notice } from '@wordpress/components';
 import { apiGet, proxyGet, proxyPost } from '../../api';
 
-export default function Updates() {
-	const [ rows, setRows ]         = useState( [] );
-	const [ loading, setLoading ]   = useState( true );
-	const [ error, setError ]       = useState( null );
-	const [ notice, setNotice ]     = useState( null );
-	const [ busySite, setBusySite ] = useState( null );
+export default function Updates( { sites: sitesProp } ) {
+	const [ rows, setRows ]             = useState( [] );
+	const [ loading, setLoading ]       = useState( true );
+	const [ error, setError ]           = useState( null );
+	const [ notice, setNotice ]         = useState( null );
+	const [ busySite, setBusySite ]     = useState( null );
+	const [ bulkUpdating, setBulkUpdating ] = useState( false );
+	const [ bulkProgress, setBulkProgress ] = useState( null );
 
-	async function fetchUpdates() {
+	async function fetchUpdates( overrideSites ) {
 		setLoading( true );
 		setError( null );
 		try {
-			const sites = await apiGet( '/sites' );
+			const sites = overrideSites ?? sitesProp ?? await apiGet( '/sites' );
 			const results = await Promise.all(
 				sites.map( async ( site ) => {
 					try {
@@ -49,7 +54,9 @@ export default function Updates() {
 		}
 	}
 
-	useEffect( () => { fetchUpdates(); }, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect( () => {
+		fetchUpdates();
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	async function applyCoreUpdate( siteId, siteName ) {
 		if ( ! window.confirm( `Apply WordPress core update on "${ siteName }"?` ) ) return;
@@ -67,6 +74,43 @@ export default function Updates() {
 		}
 	}
 
+	async function updateAllSites() {
+		const sitesWithUpdates = rows.filter(
+			( r ) => r.online && ( r.wp_update || r.plugin_updates > 0 )
+		);
+		if ( sitesWithUpdates.length === 0 ) return;
+		if (
+			! window.confirm(
+				`Apply all available updates across ${ sitesWithUpdates.length } site(s)? This includes core and plugin updates.`
+			)
+		) return;
+
+		setBulkUpdating( true );
+		setError( null );
+		let done = 0;
+
+		for ( const row of sitesWithUpdates ) {
+			setBulkProgress(
+				`Updating ${ row.site.name } (${ done + 1 }/${ sitesWithUpdates.length })…`
+			);
+			try {
+				if ( row.wp_update ) {
+					await proxyPost( row.site.id, '/updates/core', {} );
+				}
+				if ( row.plugin_updates > 0 ) {
+					await proxyPost( row.site.id, '/updates/plugins', {} );
+				}
+			} catch { /* continue to next site */ }
+			done++;
+		}
+
+		setBulkProgress( null );
+		setBulkUpdating( false );
+		setNotice( `Bulk update complete across ${ done } site(s).` );
+		setTimeout( () => setNotice( null ), 6000 );
+		fetchUpdates();
+	}
+
 	if ( loading ) {
 		return (
 			<div className="wp-dash-loading">
@@ -79,6 +123,7 @@ export default function Updates() {
 	const totalCoreUpdates   = rows.filter( ( r ) => r.wp_update ).length;
 	const totalPluginUpdates = rows.reduce( ( sum, r ) => sum + r.plugin_updates, 0 );
 	const totalThemeUpdates  = rows.reduce( ( sum, r ) => sum + r.theme_updates, 0 );
+	const sitesNeedingUpdates = rows.filter( ( r ) => r.online && ( r.wp_update || r.plugin_updates > 0 ) ).length;
 
 	return (
 		<div>
@@ -94,10 +139,15 @@ export default function Updates() {
 			) }
 			{ error && <div className="wp-dash-error">{ error }</div> }
 
+			{ /* Summary cards */ }
 			<div className="wp-dash-summary-row" style={ { marginBottom: 20 } }>
 				<div className="wp-dash-stat-card">
 					<div className="stat-value">{ rows.length }</div>
 					<div className="stat-label">Total Sites</div>
+				</div>
+				<div className={ `wp-dash-stat-card ${ sitesNeedingUpdates > 0 ? 'has-updates' : '' }` }>
+					<div className="stat-value">{ sitesNeedingUpdates }</div>
+					<div className="stat-label">Sites with Updates</div>
 				</div>
 				<div className={ `wp-dash-stat-card ${ totalCoreUpdates > 0 ? 'has-updates' : '' }` }>
 					<div className="stat-value">{ totalCoreUpdates }</div>
@@ -113,10 +163,27 @@ export default function Updates() {
 				</div>
 			</div>
 
-			<div style={ { marginBottom: 12 } }>
-				<Button variant="secondary" onClick={ fetchUpdates } disabled={ loading }>
+			<div style={ { display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center' } }>
+				<Button
+					variant="secondary"
+					onClick={ () => fetchUpdates() }
+					disabled={ loading || bulkUpdating }
+				>
 					↻ Refresh
 				</Button>
+				{ sitesNeedingUpdates > 0 && (
+					<Button
+						variant="primary"
+						isBusy={ bulkUpdating }
+						disabled={ bulkUpdating || !! busySite }
+						onClick={ updateAllSites }
+					>
+						⬆ Update All Sites ({ sitesNeedingUpdates })
+					</Button>
+				) }
+				{ bulkProgress && (
+					<span style={ { fontSize: 13, color: '#646970' } }>{ bulkProgress }</span>
+				) }
 			</div>
 
 			{ rows.length === 0 ? (
@@ -172,7 +239,7 @@ export default function Updates() {
 												variant="primary"
 												size="small"
 												isBusy={ busySite === site.id }
-												disabled={ busySite !== null }
+												disabled={ busySite !== null || bulkUpdating }
 												onClick={ () => applyCoreUpdate( site.id, site.name ) }
 											>
 												Apply Core Update

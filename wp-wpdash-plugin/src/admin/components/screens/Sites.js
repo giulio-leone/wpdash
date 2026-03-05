@@ -1,9 +1,22 @@
 /**
  * Sites.js – List connected sites and add / remove them.
+ *
+ * Accepts optional `sites` and `onSitesChange` props from App.js shared state.
+ * Each row has a "Test Connection" button that pings /health on the bridge.
+ * The Add New Site form validates URL format before submitting.
  */
 import { useState, useEffect } from '@wordpress/element';
 import { Button, TextControl, Spinner, Notice } from '@wordpress/components';
-import { apiGet, apiPost, apiDelete } from '../../api';
+import { apiGet, apiPost, apiDelete, proxyGet } from '../../api';
+
+function isValidUrl( value ) {
+	try {
+		const u = new URL( value );
+		return u.protocol === 'http:' || u.protocol === 'https:';
+	} catch {
+		return false;
+	}
+}
 
 function AddSiteForm( { onAdded } ) {
 	const [ name, setName ]       = useState( '' );
@@ -16,6 +29,10 @@ function AddSiteForm( { onAdded } ) {
 		e.preventDefault();
 		if ( ! name || ! url || ! token ) {
 			setError( 'All fields are required.' );
+			return;
+		}
+		if ( ! isValidUrl( url ) ) {
+			setError( 'Please enter a valid URL starting with http:// or https://.' );
 			return;
 		}
 		setSaving( true );
@@ -53,6 +70,7 @@ function AddSiteForm( { onAdded } ) {
 						onChange={ setUrl }
 						placeholder="https://example.com"
 						type="url"
+						help={ url && ! isValidUrl( url ) ? 'Enter a valid URL (https://…)' : undefined }
 					/>
 					<TextControl
 						label="API Token"
@@ -75,18 +93,30 @@ function AddSiteForm( { onAdded } ) {
 	);
 }
 
-export default function Sites() {
-	const [ sites, setSites ]   = useState( [] );
-	const [ loading, setLoading ] = useState( true );
-	const [ error, setError ]   = useState( null );
-	const [ notice, setNotice ] = useState( null );
+export default function Sites( { sites: sitesProp, onSitesChange } ) {
+	const [ sites, setSitesLocal ] = useState( sitesProp ?? [] );
+	const [ loading, setLoading ]  = useState( ! sitesProp );
+	const [ error, setError ]      = useState( null );
+	const [ notice, setNotice ]    = useState( null );
+	const [ connResults, setConnResults ] = useState( {} ); // per-site test results
+
+	// Keeps local state and the App-level shared state in sync.
+	function setSites( next ) {
+		const resolved = typeof next === 'function' ? next( sites ) : next;
+		setSitesLocal( resolved );
+		if ( onSitesChange ) onSitesChange( resolved );
+	}
 
 	useEffect( () => {
+		if ( sitesProp !== undefined ) {
+			setLoading( false );
+			return;
+		}
 		apiGet( '/sites' )
-			.then( setSites )
+			.then( ( data ) => setSites( data ) )
 			.catch( ( err ) => setError( err.message ) )
 			.finally( () => setLoading( false ) );
-	}, [] );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	function handleAdded( site ) {
 		setSites( ( prev ) => [ ...prev, site ] );
@@ -103,6 +133,25 @@ export default function Sites() {
 			setTimeout( () => setNotice( null ), 4000 );
 		} catch ( err ) {
 			setError( err.message );
+		}
+	}
+
+	async function handleTestConnection( site ) {
+		setConnResults( ( prev ) => ( { ...prev, [ site.id ]: 'testing' } ) );
+		try {
+			const health = await proxyGet( site.id, '/health' );
+			setConnResults( ( prev ) => ( {
+				...prev,
+				[ site.id ]: {
+					ok: true,
+					info: `WP ${ health.wp_version ?? '' } · PHP ${ health.php_version ?? '' }`,
+				},
+			} ) );
+		} catch ( err ) {
+			setConnResults( ( prev ) => ( {
+				...prev,
+				[ site.id ]: { ok: false, info: err.message },
+			} ) );
 		}
 	}
 
@@ -141,31 +190,57 @@ export default function Sites() {
 								<th>Name</th>
 								<th>URL</th>
 								<th>Added</th>
+								<th>Connection</th>
 								<th>Actions</th>
 							</tr>
 						</thead>
 						<tbody>
-							{ sites.map( ( site ) => (
-								<tr key={ site.id }>
-									<td><strong>{ site.name }</strong></td>
-									<td>
-										<a href={ site.url } target="_blank" rel="noreferrer">
-											{ site.url }
-										</a>
-									</td>
-									<td>{ new Date( site.created_at ).toLocaleDateString() }</td>
-									<td>
-										<Button
-											variant="secondary"
-											isDestructive
-											size="small"
-											onClick={ () => handleDelete( site ) }
-										>
-											Remove
-										</Button>
-									</td>
-								</tr>
-							) ) }
+							{ sites.map( ( site ) => {
+								const connResult = connResults[ site.id ];
+								return (
+									<tr key={ site.id }>
+										<td><strong>{ site.name }</strong></td>
+										<td>
+											<a href={ site.url } target="_blank" rel="noreferrer">
+												{ site.url }
+											</a>
+										</td>
+										<td>{ new Date( site.created_at ).toLocaleDateString() }</td>
+										<td>
+											{ connResult === 'testing' ? (
+												<Spinner />
+											) : connResult ? (
+												<span style={ { fontSize: 12, color: connResult.ok ? '#1a7f37' : '#d63638' } }>
+													{ connResult.ok ? '✅' : '❌' } { connResult.info }
+												</span>
+											) : (
+												<span style={ { color: '#c3c4c7', fontSize: 12 } }>—</span>
+											) }
+										</td>
+										<td>
+											<div className="actions">
+												<Button
+													variant="secondary"
+													size="small"
+													isBusy={ connResult === 'testing' }
+													disabled={ connResult === 'testing' }
+													onClick={ () => handleTestConnection( site ) }
+												>
+													Test Connection
+												</Button>
+												<Button
+													variant="secondary"
+													isDestructive
+													size="small"
+													onClick={ () => handleDelete( site ) }
+												>
+													Remove
+												</Button>
+											</div>
+										</td>
+									</tr>
+								);
+							} ) }
 						</tbody>
 					</table>
 				</div>

@@ -1,5 +1,5 @@
 /**
- * Sidebar.js – Navigation sidebar.
+ * Sidebar.js – Navigation sidebar with optional notification badges.
  */
 
 const NAV_ITEMS = [
@@ -11,22 +11,32 @@ const NAV_ITEMS = [
 	{ id: 'settings',  label: 'Settings',  icon: 'dashicons-admin-settings' },
 ];
 
-export default function Sidebar( { currentScreen, onNavigate } ) {
+export default function Sidebar( { currentScreen, onNavigate, badges = {} } ) {
 	return (
 		<aside className="wp-dash-sidebar">
 			<nav>
 				<ul>
-					{ NAV_ITEMS.map( ( item ) => (
-						<li key={ item.id }>
-							<button
-								className={ currentScreen === item.id ? 'active' : '' }
-								onClick={ () => onNavigate( item.id ) }
-							>
-								<span className={ `dashicons ${ item.icon }` } />
-								{ item.label }
-							</button>
-						</li>
-					) ) }
+					{ NAV_ITEMS.map( ( item ) => {
+						const badgeCount =
+							item.id === 'updates'  ? ( badges.updates  ?? 0 ) :
+							item.id === 'security' ? ( badges.security ?? 0 ) :
+							0;
+
+						return (
+							<li key={ item.id }>
+								<button
+									className={ currentScreen === item.id ? 'active' : '' }
+									onClick={ () => onNavigate( item.id ) }
+								>
+									<span className={ `dashicons ${ item.icon }` } />
+									{ item.label }
+									{ badgeCount > 0 && (
+										<span className="wp-dash-nav-badge">{ badgeCount }</span>
+									) }
+								</button>
+							</li>
+						);
+					} ) }
 				</ul>
 			</nav>
 		</aside>

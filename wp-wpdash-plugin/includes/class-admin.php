@@ -102,6 +102,7 @@ class WP_Dash_Admin {
                 'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
                 'siteUrl'  => get_site_url(),
                 'adminUrl' => admin_url(),
+                'version'  => WP_DASH_VERSION,
             ]
         );
     }

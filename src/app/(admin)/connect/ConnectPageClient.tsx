@@ -17,12 +17,26 @@ const STEPS = [
 export default function ConnectPageClient() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
+  const [animating, setAnimating] = useState(false);
   const [siteName, setSiteName] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
   const [siteToken, setSiteToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
+
+  // Animate step transitions
+  function goTo(next: Step) {
+    if (next === step) return;
+    setAnimating(true);
+    setTimeout(() => {
+      setStep(next);
+      setAnimating(false);
+    }, 200);
+  }
+
+  // Progress percentage
+  const progress = Math.round(((step - 1) / (STEPS.length - 1)) * 100);
 
   async function handleVerify() {
     if (!siteUrl || !siteToken) return;
@@ -71,15 +85,22 @@ export default function ConnectPageClient() {
       </div>
 
       {/* Step indicator */}
-      <div className="w-full max-w-2xl mb-8">
+      <div className="w-full max-w-2xl mb-4">
+        {/* Progress bar */}
+        <div className="mb-4 h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+          <div
+            className="h-1.5 rounded-full bg-brand-500 transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
         <div className="flex items-center justify-between relative">
           <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700 z-0" />
           {STEPS.map((s) => (
             <div key={s.id} className="relative z-10 flex flex-col items-center gap-1.5">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-300 ${
                   step === s.id
-                    ? "bg-brand-500 border-brand-500 text-white"
+                    ? "bg-brand-500 border-brand-500 text-white scale-110"
                     : step > s.id
                     ? "bg-green-500 border-green-500 text-white"
                     : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-400"
@@ -87,7 +108,7 @@ export default function ConnectPageClient() {
               >
                 {step > s.id ? "✓" : s.id}
               </div>
-              <span className={`text-xs font-medium hidden sm:block ${step === s.id ? "text-brand-500" : step > s.id ? "text-green-500" : "text-gray-400"}`}>
+              <span className={`text-xs font-medium hidden sm:block transition-colors ${step === s.id ? "text-brand-500 font-semibold" : step > s.id ? "text-green-500" : "text-gray-400"}`}>
                 {s.label}
               </span>
             </div>
@@ -95,8 +116,19 @@ export default function ConnectPageClient() {
         </div>
       </div>
 
+      {/* Step counter */}
+      <div className="w-full max-w-2xl mb-4 flex items-center justify-between text-xs text-gray-400 dark:text-gray-600">
+        <span>Step {step} of {STEPS.length}</span>
+        <span>{progress}% complete</span>
+      </div>
+
       {/* Card */}
-      <div className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 overflow-hidden">
+      <div
+        className={`w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 overflow-hidden transition-opacity duration-200 ${
+          animating ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"
+        }`}
+        style={{ transition: "opacity 0.2s ease, transform 0.2s ease" }}
+      >
 
         {/* Step 1 — Welcome */}
         {step === 1 && (
@@ -125,7 +157,7 @@ export default function ConnectPageClient() {
               ))}
             </div>
             <button
-              onClick={() => setStep(2)}
+              onClick={() => goTo(2 as Step)}
               className="mt-2 px-10 py-3 rounded-xl bg-brand-500 text-white font-semibold text-base hover:bg-brand-600 transition-colors"
             >
               Get Started →
@@ -176,10 +208,10 @@ export default function ConnectPageClient() {
               Download wp-dash-bridge.zip
             </a>
             <div className="flex gap-3 mt-2">
-              <button onClick={() => setStep(1)} className="px-6 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors">
+              <button onClick={() => goTo(1 as Step)} className="px-6 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors">
                 ← Back
               </button>
-              <button onClick={() => setStep(3)} className="px-6 py-2 rounded-lg bg-brand-500 text-white font-semibold text-sm hover:bg-brand-600 transition-colors">
+              <button onClick={() => goTo(3 as Step)} className="px-6 py-2 rounded-lg bg-brand-500 text-white font-semibold text-sm hover:bg-brand-600 transition-colors">
                 Downloaded →
               </button>
             </div>
@@ -232,10 +264,10 @@ export default function ConnectPageClient() {
               ))}
             </div>
             <div className="flex gap-3 mt-2">
-              <button onClick={() => setStep(2)} className="px-6 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors">
+              <button onClick={() => goTo(2 as Step)} className="px-6 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors">
                 ← Back
               </button>
-              <button onClick={() => setStep(4)} className="px-6 py-2 rounded-lg bg-brand-500 text-white font-semibold text-sm hover:bg-brand-600 transition-colors">
+              <button onClick={() => goTo(4 as Step)} className="px-6 py-2 rounded-lg bg-brand-500 text-white font-semibold text-sm hover:bg-brand-600 transition-colors">
                 I have my token →
               </button>
             </div>
@@ -310,7 +342,7 @@ export default function ConnectPageClient() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setStep(3)}
+                  onClick={() => goTo(3 as Step)}
                   className="px-6 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors"
                 >
                   ← Back
@@ -373,16 +405,25 @@ export default function ConnectPageClient() {
 
       {/* Bottom help text */}
       {step < 5 && (
-        <p className="mt-6 text-sm text-gray-400 dark:text-gray-600">
-          Need help?{" "}
-          <a href="/mcp" className="text-brand-500 hover:underline">
-            Check the MCP / AI docs
-          </a>{" "}
-          or{" "}
-          <a href="mailto:support@wpdash.io" className="text-brand-500 hover:underline">
-            contact support
-          </a>
-        </p>
+        <div className="mt-6 text-center space-y-2">
+          <p className="text-sm text-gray-400 dark:text-gray-600">
+            Prefer WordPress native?{" "}
+            <a href="/api/wpdash-plugin-download" className="text-brand-500 hover:underline font-medium" download="wp-wpdash.zip">
+              Download the WP Dash Hub Plugin
+            </a>{" "}
+            — manage all sites directly from any WordPress admin.
+          </p>
+          <p className="text-sm text-gray-400 dark:text-gray-600">
+            Need help?{" "}
+            <a href="/mcp" className="text-brand-500 hover:underline">
+              MCP / AI docs
+            </a>{" "}
+            or{" "}
+            <a href="mailto:support@wpdash.io" className="text-brand-500 hover:underline">
+              contact support
+            </a>
+          </p>
+        </div>
       )}
     </div>
   );

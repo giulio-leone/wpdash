@@ -1,19 +1,29 @@
 /**
  * Security.js – Run and display a security integrity audit on a selected site.
+ *
+ * Improvements: accepts shared `sites` prop, shows last audit timestamp,
+ * adds a "Run New Audit" button (POST /security/scan), color-codes status.
  */
 import { useState, useEffect } from '@wordpress/element';
 import { Button, SelectControl, Spinner } from '@wordpress/components';
-import { apiGet, proxyGet } from '../../api';
+import { apiGet, proxyGet, proxyPost } from '../../api';
 
-export default function Security() {
-	const [ sites, setSites ]         = useState( [] );
+export default function Security( { sites: sitesProp } ) {
+	const [ sites, setSites ]               = useState( sitesProp ?? [] );
 	const [ selectedSite, setSelectedSite ] = useState( '' );
-	const [ audit, setAudit ]         = useState( null );
-	const [ loading, setLoading ]     = useState( false );
-	const [ sitesLoading, setSitesLoading ] = useState( true );
-	const [ error, setError ]         = useState( null );
+	const [ audit, setAudit ]               = useState( null );
+	const [ loading, setLoading ]           = useState( false );
+	const [ sitesLoading, setSitesLoading ] = useState( ! sitesProp );
+	const [ error, setError ]               = useState( null );
+	const [ auditDate, setAuditDate ]       = useState( null );
+	const [ scanning, setScanning ]         = useState( false );
 
 	useEffect( () => {
+		if ( sitesProp !== undefined ) {
+			if ( sitesProp.length > 0 ) setSelectedSite( String( sitesProp[ 0 ].id ) );
+			setSitesLoading( false );
+			return;
+		}
 		apiGet( '/sites' )
 			.then( ( data ) => {
 				setSites( data );
@@ -21,7 +31,7 @@ export default function Security() {
 			} )
 			.catch( ( err ) => setError( err.message ) )
 			.finally( () => setSitesLoading( false ) );
-	}, [] );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Auto-run audit when site selection changes.
 	useEffect( () => {
@@ -36,6 +46,7 @@ export default function Security() {
 		try {
 			const result = await proxyGet( Number( selectedSite ), '/security/integrity' );
 			setAudit( result );
+			setAuditDate( new Date() );
 		} catch ( err ) {
 			setError( err.message );
 		} finally {
@@ -43,8 +54,37 @@ export default function Security() {
 		}
 	}
 
+	async function runNewScan() {
+		setScanning( true );
+		setError( null );
+		try {
+			await proxyPost( Number( selectedSite ), '/security/scan', {} );
+		} catch ( err ) {
+			// Non-fatal: scan trigger may not exist on all bridges; still refresh audit.
+			setError( `Scan trigger: ${ err.message }` );
+		} finally {
+			setScanning( false );
+		}
+		await runAudit();
+	}
+
 	const siteOptions = sites.map( ( s ) => ( { label: s.name, value: String( s.id ) } ) );
-	const isClean     = audit && ( ! audit.issues || audit.issues.length === 0 );
+
+	// Status logic
+	let statusLabel, statusColor, statusBg;
+	if ( ! audit ) {
+		statusLabel = 'NO DATA';
+		statusColor = '#646970';
+		statusBg    = '#f0f0f1';
+	} else if ( ! audit.issues || audit.issues.length === 0 ) {
+		statusLabel = 'CLEAN';
+		statusColor = '#1a7f37';
+		statusBg    = '#edfaef';
+	} else {
+		statusLabel = 'ISSUES FOUND';
+		statusColor = '#d63638';
+		statusBg    = '#fce8e8';
+	}
 
 	if ( sitesLoading ) {
 		return (
@@ -69,8 +109,8 @@ export default function Security() {
 			) : (
 				<>
 					<div className="wp-dash-card" style={ { marginBottom: 20 } }>
-						<div style={ { display: 'flex', gap: 12, alignItems: 'flex-end' } }>
-							<div style={ { flex: 1 } }>
+						<div style={ { display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' } }>
+							<div style={ { flex: 1, minWidth: 180 } }>
 								<SelectControl
 									label="Select Site"
 									value={ selectedSite }
@@ -81,13 +121,27 @@ export default function Security() {
 							<Button
 								variant="secondary"
 								onClick={ runAudit }
-								disabled={ loading || ! selectedSite }
+								disabled={ loading || scanning || ! selectedSite }
 								isBusy={ loading }
 								style={ { marginBottom: 8 } }
 							>
-								Run Audit
+								↻ Refresh Audit
+							</Button>
+							<Button
+								variant="primary"
+								onClick={ runNewScan }
+								disabled={ loading || scanning || ! selectedSite }
+								isBusy={ scanning }
+								style={ { marginBottom: 8 } }
+							>
+								▶ Run New Audit
 							</Button>
 						</div>
+						{ auditDate && (
+							<div style={ { fontSize: 11, color: '#646970', marginTop: 4 } }>
+								Last audited: { auditDate.toLocaleString() }
+							</div>
+						) }
 					</div>
 
 					{ loading && (
@@ -97,22 +151,33 @@ export default function Security() {
 						</div>
 					) }
 
-					{ ! loading && audit && (
+					{ ! loading && (
 						<div className="wp-dash-card">
 							<div style={ { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 } }>
 								<h3 style={ { margin: 0 } }>Audit Result</h3>
-								<span className={ `wp-dash-badge ${ isClean ? 'clean' : 'issues' }` }>
-									{ isClean ? 'CLEAN' : 'ISSUES FOUND' }
+								<span
+									style={ {
+										display: 'inline-block',
+										padding: '3px 10px',
+										borderRadius: 12,
+										fontSize: 11,
+										fontWeight: 700,
+										letterSpacing: 0.5,
+										background: statusBg,
+										color: statusColor,
+									} }
+								>
+									{ statusLabel }
 								</span>
 							</div>
 
-							{ audit.summary && (
+							{ audit && audit.summary && (
 								<p style={ { margin: '0 0 12px', color: '#50575e', fontSize: 13 } }>
 									{ audit.summary }
 								</p>
 							) }
 
-							{ audit.checks && (
+							{ audit && audit.checks && (
 								<div style={ { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 16 } }>
 									{ Object.entries( audit.checks ).map( ( [ key, val ] ) => (
 										<div key={ key } style={ { background: '#f0f0f1', padding: '10px 14px', borderRadius: 4 } }>
@@ -127,7 +192,7 @@ export default function Security() {
 								</div>
 							) }
 
-							{ ! isClean && audit.issues && audit.issues.length > 0 && (
+							{ audit && audit.issues && audit.issues.length > 0 && (
 								<>
 									<h4 style={ { margin: '0 0 8px', fontSize: 13 } }>
 										{ audit.issues.length } suspicious / modified file{ audit.issues.length !== 1 ? 's' : '' }:
@@ -146,9 +211,15 @@ export default function Security() {
 								</>
 							) }
 
-							{ isClean && (
+							{ audit && ( ! audit.issues || audit.issues.length === 0 ) && (
 								<p style={ { color: '#1a7f37', fontWeight: 600 } }>
 									✓ No suspicious files detected. Your installation looks healthy.
+								</p>
+							) }
+
+							{ ! audit && (
+								<p style={ { color: '#646970' } }>
+									No audit data yet. Select a site and click "Run New Audit".
 								</p>
 							) }
 						</div>

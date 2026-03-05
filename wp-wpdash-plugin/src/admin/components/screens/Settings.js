@@ -1,9 +1,14 @@
 /**
  * Settings.js – Manage site connections (view token, test connection, edit, remove).
+ *
+ * Improvements: accepts shared `sites` prop, shows plugin version,
+ * adds "Export Sites List" button (downloads name+url JSON, no tokens).
  */
 import { useState, useEffect } from '@wordpress/element';
 import { Button, TextControl, Spinner, Notice } from '@wordpress/components';
 import { apiGet, apiPost, apiDelete, proxyGet } from '../../api';
+
+const pluginVersion = window.wpDashData?.version ?? '—';
 
 function EditSiteModal( { site, onSave, onCancel } ) {
 	const [ name, setName ]     = useState( site.name );
@@ -56,20 +61,30 @@ function EditSiteModal( { site, onSave, onCancel } ) {
 	);
 }
 
-export default function Settings() {
-	const [ sites, setSites ]       = useState( [] );
-	const [ loading, setLoading ]   = useState( true );
+export default function Settings( { sites: sitesProp, onSitesChange } ) {
+	const [ sites, setSitesLocal ]  = useState( sitesProp ?? [] );
+	const [ loading, setLoading ]   = useState( ! sitesProp );
 	const [ error, setError ]       = useState( null );
 	const [ notice, setNotice ]     = useState( null );
 	const [ testResults, setTestResults ] = useState( {} );
 	const [ editingId, setEditingId ]     = useState( null );
 
+	function setSites( next ) {
+		const resolved = typeof next === 'function' ? next( sites ) : next;
+		setSitesLocal( resolved );
+		if ( onSitesChange ) onSitesChange( resolved );
+	}
+
 	useEffect( () => {
+		if ( sitesProp !== undefined ) {
+			setLoading( false );
+			return;
+		}
 		apiGet( '/sites' )
-			.then( setSites )
+			.then( ( data ) => setSites( data ) )
 			.catch( ( err ) => setError( err.message ) )
 			.finally( () => setLoading( false ) );
-	}, [] );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	function showNotice( msg, status = 'success' ) {
 		setNotice( { msg, status } );
@@ -112,6 +127,17 @@ export default function Settings() {
 		showNotice( 'Site updated.' );
 	}
 
+	function handleExport() {
+		const data = sites.map( ( s ) => ( { name: s.name, url: s.url } ) );
+		const blob = new Blob( [ JSON.stringify( data, null, 2 ) ], { type: 'application/json' } );
+		const url  = URL.createObjectURL( blob );
+		const a    = document.createElement( 'a' );
+		a.href     = url;
+		a.download = 'wpdash-sites.json';
+		a.click();
+		URL.revokeObjectURL( url );
+	}
+
 	if ( loading ) {
 		return (
 			<div className="wp-dash-loading">
@@ -125,7 +151,12 @@ export default function Settings() {
 		<div>
 			<div className="wp-dash-screen-header">
 				<h2>Settings</h2>
-				<p>Manage API tokens and connections for each site.</p>
+				<div style={ { display: 'flex', alignItems: 'center', gap: 16 } }>
+					<p style={ { margin: 0 } }>Manage API tokens and connections for each site.</p>
+					<span style={ { fontSize: 11, color: '#646970', background: '#f0f0f1', padding: '2px 8px', borderRadius: 10 } }>
+						WP Dash v{ pluginVersion }
+					</span>
+				</div>
 			</div>
 
 			{ notice && (
@@ -144,81 +175,89 @@ export default function Settings() {
 					No sites configured. Go to <strong>Sites</strong> to add your first site.
 				</div>
 			) : (
-				<div>
-					{ sites.map( ( site ) => {
-						const testResult = testResults[ site.id ];
-						return (
-							<div key={ site.id } className="wp-dash-card" style={ { marginBottom: 16 } }>
-								{ editingId === site.id ? (
-									<EditSiteModal
-										site={ site }
-										onSave={ handleSaved }
-										onCancel={ () => setEditingId( null ) }
-									/>
-								) : (
-									<>
-										<div style={ { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 } }>
-											<div>
-												<strong style={ { fontSize: 15 } }>{ site.name }</strong>
-												<div style={ { fontSize: 12, color: '#646970', marginTop: 2 } }>
-													<a href={ site.url } target="_blank" rel="noreferrer">{ site.url }</a>
-												</div>
-												<div style={ { fontSize: 11, color: '#646970', marginTop: 2 } }>
-													Added: { new Date( site.created_at ).toLocaleDateString() }
-												</div>
-											</div>
-											<div style={ { display: 'flex', gap: 6, flexWrap: 'wrap' } }>
-												<Button
-													variant="secondary"
-													size="small"
-													isBusy={ testResult === 'testing' }
-													disabled={ testResult === 'testing' }
-													onClick={ () => testConnection( site ) }
-												>
-													Test Connection
-												</Button>
-												<Button
-													variant="secondary"
-													size="small"
-													onClick={ () => setEditingId( site.id ) }
-												>
-													Edit
-												</Button>
-												<Button
-													variant="secondary"
-													isDestructive
-													size="small"
-													onClick={ () => handleDelete( site ) }
-												>
-													Remove
-												</Button>
-											</div>
-										</div>
+				<>
+					<div style={ { marginBottom: 16 } }>
+						<Button variant="secondary" onClick={ handleExport }>
+							⬇ Export Sites List
+						</Button>
+					</div>
 
-										{ testResult && testResult !== 'testing' && (
-											<div
-												style={ {
-													display: 'inline-flex',
-													alignItems: 'center',
-													gap: 6,
-													padding: '6px 12px',
-													borderRadius: 4,
-													fontSize: 12,
-													background: testResult.ok ? '#edfaef' : '#fce8e8',
-													color: testResult.ok ? '#1a7f37' : '#d63638',
-													marginTop: 4,
-												} }
-											>
-												{ testResult.ok ? '✓ Connected' : '✗ Failed' }
-												{ testResult.info && ` — ${ testResult.info }` }
+					<div>
+						{ sites.map( ( site ) => {
+							const testResult = testResults[ site.id ];
+							return (
+								<div key={ site.id } className="wp-dash-card" style={ { marginBottom: 16 } }>
+									{ editingId === site.id ? (
+										<EditSiteModal
+											site={ site }
+											onSave={ handleSaved }
+											onCancel={ () => setEditingId( null ) }
+										/>
+									) : (
+										<>
+											<div style={ { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 } }>
+												<div>
+													<strong style={ { fontSize: 15 } }>{ site.name }</strong>
+													<div style={ { fontSize: 12, color: '#646970', marginTop: 2 } }>
+														<a href={ site.url } target="_blank" rel="noreferrer">{ site.url }</a>
+													</div>
+													<div style={ { fontSize: 11, color: '#646970', marginTop: 2 } }>
+														Added: { new Date( site.created_at ).toLocaleDateString() }
+													</div>
+												</div>
+												<div style={ { display: 'flex', gap: 6, flexWrap: 'wrap' } }>
+													<Button
+														variant="secondary"
+														size="small"
+														isBusy={ testResult === 'testing' }
+														disabled={ testResult === 'testing' }
+														onClick={ () => testConnection( site ) }
+													>
+														Test Connection
+													</Button>
+													<Button
+														variant="secondary"
+														size="small"
+														onClick={ () => setEditingId( site.id ) }
+													>
+														Edit
+													</Button>
+													<Button
+														variant="secondary"
+														isDestructive
+														size="small"
+														onClick={ () => handleDelete( site ) }
+													>
+														Remove
+													</Button>
+												</div>
 											</div>
-										) }
-									</>
-								) }
-							</div>
-						);
-					} ) }
-				</div>
+
+											{ testResult && testResult !== 'testing' && (
+												<div
+													style={ {
+														display: 'inline-flex',
+														alignItems: 'center',
+														gap: 6,
+														padding: '6px 12px',
+														borderRadius: 4,
+														fontSize: 12,
+														background: testResult.ok ? '#edfaef' : '#fce8e8',
+														color: testResult.ok ? '#1a7f37' : '#d63638',
+														marginTop: 4,
+													} }
+												>
+													{ testResult.ok ? '✓ Connected' : '✗ Failed' }
+													{ testResult.info && ` — ${ testResult.info }` }
+												</div>
+											) }
+										</>
+									) }
+								</div>
+							);
+						} ) }
+					</div>
+				</>
 			) }
 		</div>
 	);
