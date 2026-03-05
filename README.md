@@ -1,196 +1,224 @@
-# TailAdmin Next.js - Free Next.js Tailwind Admin Dashboard Template
+# WP Dash
 
-TailAdmin is a free and open-source admin dashboard template built on **Next.js and Tailwind CSS** providing developers with everything they need to create a feature-rich and data-driven: back-end, dashboard, or admin panel solution for any sort of web project.
+> **Centralized WordPress monitoring and maintenance dashboard**
 
-![TailAdmin - Next.js Dashboard Preview](./banner.png)
+![version](https://img.shields.io/badge/version-0.1.0-blue)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![license](https://img.shields.io/badge/license-MIT-green)
+![node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)
+![status](https://img.shields.io/badge/status-experimental-orange)
 
-With TailAdmin Next.js, you get access to all the necessary dashboard UI components, elements, and pages required to build a high-quality and complete dashboard or admin panel. Whether you're building a dashboard or admin panel for a complex web application or a simple website.
+WP Dash is an open-source dashboard to monitor, manage, and maintain multiple WordPress sites from a single interface. It connects to each site through a lightweight WordPress plugin (WP Dash Bridge) that exposes a secure REST API.
 
-TailAdmin utilizes the powerful features of **Next.js 16** and common features of Next.js such as server-side rendering (SSR), static site generation (SSG), and seamless API route integration. Combined with the advancements of **React 19** and the robustness of **TypeScript**, TailAdmin is the perfect solution to help get your project up and running quickly.
+---
 
-## Overview
+> ⚠️ **Experimental software** — WP Dash is under active development. Interfaces, APIs, and data models may change without notice between releases. Use in production at your own risk.
 
-TailAdmin provides essential UI components and layouts for building feature-rich, data-driven admin dashboards and control panels. It's built on:
+---
 
-- Next.js 16.x
-- React 19
-- TypeScript
-- Tailwind CSS V4
+## Table of Contents
 
-### Quick Links
+- [Features](#features)
+- [Architecture](#architecture)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [npm / local dev](#npm--local-dev)
+  - [Docker](#docker)
+- [WordPress Plugins](#wordpress-plugins)
+  - [WP Dash Bridge (recommended)](#wp-dash-bridge-recommended)
+  - [WP Dash Standalone (highly experimental)](#wp-dash-standalone-highly-experimental)
+- [Releases](#releases)
+- [Documentation](#documentation)
+- [License](#license)
 
-- [✨ Visit Website](https://tailadmin.com)
-- [📄 Documentation](https://tailadmin.com/docs)
-- [⬇️ Download](https://tailadmin.com/download)
-- [🖌️ Figma Design File (Community Edition)](https://www.figma.com/community/file/1463141366275764364)
-- [⚡ Get PRO Version](https://tailadmin.com/pricing)
+---
 
-### Demos
+## Features
 
-- [Free Version](https://nextjs-free-demo.tailadmin.com)
-- [Pro Version](https://nextjs-demo.tailadmin.com)
+- 🖥️ **Multi-site overview** — monitor all your WordPress installations from one place
+- 🔌 **Plugin management** — activate, deactivate, update, and install plugins remotely
+- 🔒 **Security audit** — core file integrity check against official WordPress checksums
+- 🩺 **Site health** — WP/PHP/DB versions, active theme, plugin counts at a glance
+- 📋 **Error logs** — tail PHP error logs filtered by severity level
+- 💾 **Backup status** — read backup state from common backup plugins
+- 🔍 **SEO audit** — on-demand SEO analysis for any page URL
+- 🐳 **Docker-ready** — production and development Docker Compose configs included
+- 🌙 **Dark mode** — full dark/light theme support
 
-### Other Versions
+---
 
-- [Next.js Version](https://github.com/TailAdmin/free-nextjs-admin-dashboard)
-- [React.js Version](https://github.com/TailAdmin/free-react-tailwind-admin-dashboard)
-- [Vue.js Version](https://github.com/TailAdmin/vue-tailwind-admin-dashboard)
-- [Angular Version](https://github.com/TailAdmin/free-angular-tailwind-dashboard)
-- [Laravel Version](https://github.com/TailAdmin/tailadmin-laravel)
+## Architecture
 
-## Installation
+```
+wpdash/                     ← Next.js 16 dashboard (this repo)
+  ├── src/                  ← App Router pages, API routes, components
+  ├── Dockerfile            ← Multi-stage production image (node:22-alpine)
+  ├── docker-compose.yml    ← Production stack
+  ├── docker-compose.dev.yml← Development stack (hot-reload)
+  ├── wp-bridge-plugin/     ← WP Dash Bridge WordPress plugin (source)
+  ├── wp-bridge-plugin.zip  ← WP Dash Bridge — ready-to-install ZIP
+  ├── wp-wpdash-plugin/     ← WP Dash Standalone plugin (source) ⚠️
+  └── wp-wpdash-plugin.zip  ← WP Dash Standalone — ready-to-install ZIP ⚠️
+```
+
+The dashboard communicates with WordPress sites via authenticated REST API calls.
+Each site must have **WP Dash Bridge** installed and activated.
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-To get started with TailAdmin, ensure you have the following prerequisites installed and set up:
+- **Node.js** 22.x or later
+- **npm** 10.x or later
+- (Optional) **Docker** and **Docker Compose** for containerised deployment
 
-- Node.js 18.x or later (recommended to use Node.js 20.x or later)
-
-### Cloning the Repository
-
-Clone the repository using the following command:
+### npm / local dev
 
 ```bash
-git clone https://github.com/TailAdmin/free-nextjs-admin-dashboard.git
+# 1. Clone the repository
+git clone https://github.com/giulio-leone/wpdash.git
+cd wpdash
+
+# 2. Install dependencies
+npm install
+
+# 3. Copy the environment template and fill in your values
+cp .env.example .env
+
+# 4. Start the development server
+npm run dev
 ```
 
-> Windows Users: place the repository near the root of your drive if you face issues while cloning.
+The dashboard will be available at [http://localhost:3000](http://localhost:3000).
 
-1. Install dependencies:
+**Other useful commands:**
 
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+```bash
+npm run build        # Production build
+npm run start        # Start production server
+npm run lint         # ESLint (0 warnings tolerance)
+npm run type-check   # TypeScript check
+npm run test         # Unit tests (Vitest)
+npm run test:e2e     # End-to-end tests (Playwright)
+npm run check        # lint + type-check + test in one command
+```
 
-   > Use `--legacy-peer-deps` flag if you face peer-dependency error during installation.
+### Docker
 
-2. Start the development server:
+**Development (hot-reload):**
 
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
+```bash
+docker compose -f docker-compose.dev.yml up
+```
 
-## Components
+**Production:**
 
-TailAdmin is a pre-designed starting point for building a web-based dashboard using Next.js and Tailwind CSS. The template includes:
+```bash
+docker compose up --build -d
+```
 
-- Sophisticated and accessible sidebar
-- Data visualization components
-- Profile management and custom 404 page
-- Tables and Charts(Line and Bar)
-- Authentication forms and input elements
-- Alerts, Dropdowns, Modals, Buttons and more
-- Can't forget Dark Mode 🕶️
+The production image is a hardened multi-stage build (`node:22-alpine`) running as a non-root user on port `3000`.
 
-All components are built with React and styled using Tailwind CSS for easy customization.
+---
 
-## Feature Comparison
+## WordPress Plugins
 
-### Free Version
+### WP Dash Bridge (recommended)
 
-- 1 Unique Dashboard
-- 30+ dashboard components
-- 50+ UI elements
-- Basic Figma design files
-- Community support
+> Ultra-lightweight REST API bridge for WP Dash. No database writes, no admin UI bloat.
 
-### Pro Version
+**Download:** [`wp-bridge-plugin.zip`](./wp-bridge-plugin.zip)
 
-- 7 Unique Dashboards: Analytics, Ecommerce, Marketing, CRM, SaaS, Stocks, Logistics (more coming soon)
-- 500+ dashboard components and UI elements
-- Complete Figma design file
-- Email support
+**Installation:**
 
-To learn more about pro version features and pricing, visit our [pricing page](https://tailadmin.com/pricing).
+1. Upload `wp-bridge-plugin.zip` via **WordPress Admin → Plugins → Add New → Upload Plugin**
+2. Activate the plugin
+3. Go to **Settings → WP Dash Bridge** and copy your API token
+4. Add the site URL and token to your WP Dash dashboard
 
-## Changelog
+**Requirements:** WordPress 5.6+, PHP 7.4+
 
-### Version 2.2.2 - [December 30, 2025]
+**API endpoints exposed:**
 
-- Fixed date picker positioning and functionality in Statistics Chart.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/wp-json/wpdash/v1/health` | Site health (WP/PHP/DB versions, theme, plugin counts) |
+| `GET` | `/wp-json/wpdash/v1/plugins` | List all plugins with status and update info |
+| `POST` | `/wp-json/wpdash/v1/plugins/manage` | Activate / deactivate / update / delete a plugin |
+| `POST` | `/wp-json/wpdash/v1/plugins/install` | Install a plugin from slug or URL |
+| `GET` | `/wp-json/wpdash/v1/security/integrity` | Core file integrity check |
+| `POST` | `/wp-json/wpdash/v1/seo/audit` | SEO audit for a given page URL |
+| `GET` | `/wp-json/wpdash/v1/logs` | PHP error log entries (filterable by level) |
+| `GET` | `/wp-json/wpdash/v1/backup/status` | Backup status from common backup plugins |
 
-### Version 2.1.0 - [November 15, 2025]
+All endpoints require `Authorization: Bearer <token>` and are rate-limited to **60 req/min per IP**.
 
-- Updated to Next.js 16.x
-- Fixed all reported minor bugs
+---
 
-### Version 2.0.2 - [March 25, 2025]
+### WP Dash Standalone (highly experimental)
 
-- Upgraded to Next.js 16.x for [CVE-2025-29927](https://nextjs.org/blog/cve-2025-29927) concerns
-- Included overrides vectormap for packages to prevent peer dependency errors during installation.
-- Migrated from react-flatpickr to flatpickr package for React 19 support
+> ⚠️ **HIGHLY EXPERIMENTAL — NOT RECOMMENDED FOR PRODUCTION USE**
+>
+> This plugin embeds the WP Dash dashboard directly inside the WordPress admin.
+> It is in early development, may be unstable, and **is not guaranteed to work** with all WordPress configurations.
+> APIs and behavior may change at any time without notice.
 
-### Version 2.0.1 - [February 27, 2025]
+**Download:** [`wp-wpdash-plugin.zip`](./wp-wpdash-plugin.zip)
 
-#### Update Overview
+**Requirements:** WordPress 5.6+, PHP 7.4+
 
-- Upgraded to Tailwind CSS v4 for better performance and efficiency.
-- Updated class usage to match the latest syntax and features.
-- Replaced deprecated class and optimized styles.
+---
 
-#### Next Steps
+## Releases
 
-- Run npm install or yarn install to update dependencies.
-- Check for any style changes or compatibility issues.
-- Refer to the Tailwind CSS v4 [Migration Guide](https://tailwindcss.com/docs/upgrade-guide) on this release. if needed.
-- This update keeps the project up to date with the latest Tailwind improvements. 🚀
+### v0.1.0 — Initial Release
 
-### v2.0.0 (February 2025)
+**Dashboard (wpdash)**
 
-A major update focused on Next.js 16 implementation and comprehensive redesign.
+- First public release of the Next.js dashboard
+- Multi-site management UI with plugin and health monitoring
+- Supabase-backed authentication and site storage
+- Docker production and development stacks
+- WP Dash Bridge plugin integration
 
-#### Major Improvements
+**WP Dash Bridge Plugin — v1.0.0**
 
-- Complete redesign using Next.js 16 App Router and React Server Components
-- Enhanced user interface with Next.js-optimized components
-- Improved responsiveness and accessibility
-- New features including collapsible sidebar, chat screens, and calendar
-- Redesigned authentication using Next.js App Router and server actions
-- Updated data visualization using ApexCharts for React
+- Full REST API surface: health, plugins, security, SEO, logs, backups
+- Bearer token authentication with auto-generated tokens
+- Rate limiting (60 req/min per IP)
+- Plugin install/activate/deactivate/update/delete support
 
-#### Breaking Changes
+**WP Dash Standalone Plugin — v1.0.0** ⚠️ *Highly experimental*
 
-- Migrated from Next.js 14 to Next.js 16
-- Chart components now use ApexCharts for React
-- Authentication flow updated to use Server Actions and middleware
+- Embedded dashboard within WordPress admin
+- REST API bridge included
 
-[Read more](https://tailadmin.com/docs/update-logs/nextjs) on this release.
+> 📦 **Plugin ZIPs** for direct WordPress installation:
+> - [`wp-bridge-plugin.zip`](./wp-bridge-plugin.zip)
+> - [`wp-wpdash-plugin.zip`](./wp-wpdash-plugin.zip) ⚠️
 
-### v1.3.4 (July 01, 2024)
+---
 
-- Fixed JSvectormap rendering issues
+## Documentation
 
-### v1.3.3 (June 20, 2024)
+Full documentation is built with **[Docusaurus](https://docusaurus.io)** and covers:
 
-- Fixed build error related to Loader component
+- Dashboard configuration and environment variables
+- Connecting WordPress sites via WP Dash Bridge
+- REST API reference
+- Docker deployment guide
+- Security model and token management
 
-### v1.3.2 (June 19, 2024)
+📖 **[Read the docs →](https://giulio-leone.github.io/wpdash)**
 
-- Added ClickOutside component for dropdown menus
-- Refactored sidebar components
-- Updated Jsvectormap package
+> Documentation is co-located in the `docs/` directory and deployed automatically.
 
-### v1.3.1 (Feb 12, 2024)
-
-- Fixed layout naming consistency
-- Updated styles
-
-### v1.3.0 (Feb 05, 2024)
-
-- Upgraded to Next.js 14
-- Added Flatpickr integration
-- Improved form elements
-- Enhanced multiselect functionality
-- Added default layout component
+---
 
 ## License
 
-TailAdmin Next.js Free Version is released under the MIT License.
+WP Dash is released under the **MIT License**. See [LICENSE](./LICENSE) for details.
 
-## Support
-
-If you find this project helpful, please consider giving it a star on GitHub. Your support helps us continue developing and maintaining this template.
+The WordPress plugins (`wp-bridge-plugin`, `wp-wpdash-plugin`) are released under the **GPL-2.0-or-later** license, as required by the WordPress plugin ecosystem.
