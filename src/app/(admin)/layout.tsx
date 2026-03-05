@@ -5,6 +5,7 @@ import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import { ToastContainer } from "@/components/ui/toast/ToastContainer";
+import CommandPalette from "@/components/ui/command-palette/CommandPalette";
 import React from "react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">{children}</div>
       </div>
       <ToastContainer />
+      <CommandPalette />
     </div>
   );
 }

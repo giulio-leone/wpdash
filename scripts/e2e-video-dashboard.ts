@@ -311,6 +311,44 @@ async function main() {
     }
 
     // ──────────────────────────────────────────────────────────
+    //  Scene 2c — Home Dashboard (Command Center)
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 2c — Home Dashboard");
+    await page.goto(`${DASHBOARD_URL}/`, { waitUntil: "domcontentloaded" });
+    await sleep(6000); // allow server component to render
+    console.log("  ✅ Home dashboard loaded");
+    // Scroll to show all sections
+    await page.evaluate(() => window.scrollBy(0, 300));
+    await sleep(2000);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await sleep(1500);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 2d — Cmd+K Command Palette
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 2d — Command Palette");
+    // Open via Cmd+K
+    await page.keyboard.press("Meta+k");
+    await sleep(1500);
+    console.log("  ✅ Command palette opened");
+    // Type a search query
+    await page.keyboard.type("plugins");
+    await sleep(1500);
+    // Arrow down and hover
+    await page.keyboard.press("ArrowDown");
+    await sleep(600);
+    await page.keyboard.press("ArrowDown");
+    await sleep(600);
+    // Clear and search for "reports"
+    await page.keyboard.press("Meta+a");
+    await page.keyboard.type("reports");
+    await sleep(1500);
+    // Close palette
+    await page.keyboard.press("Escape");
+    await sleep(1500);
+    console.log("  ✅ Command palette demonstrated");
+
+    // ──────────────────────────────────────────────────────────
     //  Scene 3 — Site Detail: Overview
     // ──────────────────────────────────────────────────────────
     hr("Scene 3 — Site Detail: Overview");
