@@ -7,6 +7,7 @@
 ![license](https://img.shields.io/badge/license-BSL%201.1-orange)
 ![node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)
 ![status](https://img.shields.io/badge/status-experimental-orange)
+[![website](https://img.shields.io/badge/website-giulioleone.com-blue)](https://giulioleone.com)
 
 WP Dash is an open-source dashboard to monitor, manage, and maintain multiple WordPress sites from a single interface. It connects to each site through a lightweight WordPress plugin (WP Dash Bridge) that exposes a secure REST API.
 
@@ -225,6 +226,6 @@ WP Dash is released under the **[Business Source License 1.1 (BSL 1.1)](./LICENS
 - ✅ Free for non-production use (local dev, evaluation, study)
 - ❌ **No production or SaaS use** without a commercial license (Additional Use Grant: None)
 - 📅 Converts to **GPL-3.0-or-later** on **March 5, 2030**
-- 📧 Commercial licenses: [giulio@wpdash.io](mailto:giulio@wpdash.io)
+- 📧 Commercial licenses: [giulioleone097@gmail.com](mailto:giulioleone097@gmail.com) · [giulioleone.com](https://giulioleone.com)
 
 The WordPress plugins (`wp-bridge-plugin`, `wp-wpdash-plugin`) are released under the **GPL-2.0-or-later** license, as required by the WordPress plugin ecosystem.

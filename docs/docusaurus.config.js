@@ -83,6 +83,14 @@ const config = {
                 label: 'Releases',
                 href: 'https://github.com/giulio-leone/wpdash/releases',
               },
+              {
+                label: 'Commercial License',
+                href: 'https://giulioleone.com',
+              },
+              {
+                label: 'Contact',
+                href: 'mailto:giulioleone097@gmail.com',
+              },
             ],
           },
         ],

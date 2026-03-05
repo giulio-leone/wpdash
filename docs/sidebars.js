@@ -35,6 +35,13 @@ const sidebars = {
         'security/authentication',
       ],
     },
+    {
+      type: 'category',
+      label: 'License',
+      items: [
+        'license/license',
+      ],
+    },
   ],
 };
 
