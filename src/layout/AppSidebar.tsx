@@ -11,6 +11,7 @@ import {
   PieChartIcon,
   PlugInIcon,
   UserCircleIcon,
+  DownloadIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
 
@@ -36,6 +37,11 @@ const navItems: NavItem[] = [
     icon: <PieChartIcon />,
     name: "Reports",
     path: "/reports",
+  },
+  {
+    icon: <DownloadIcon />,
+    name: "Updates",
+    path: "/updates",
   },
   {
     icon: <UserCircleIcon />,

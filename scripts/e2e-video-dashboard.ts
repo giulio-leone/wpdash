@@ -808,9 +808,70 @@ async function main() {
     await sleep(2000);
 
     // ──────────────────────────────────────────────────────────
-    //  Scene 16 — Back to Overview (finale)
+    //  Scene 16 — Notification Center
     // ──────────────────────────────────────────────────────────
-    hr("Scene 16 — Finale: Overview");
+    hr("Scene 16 — Notification Center");
+    // Seed demo notifications via API
+    await page.evaluate(async (url) => {
+      await fetch(`${url}/api/notifications/seed`, { method: "POST", credentials: "include" });
+    }, DASHBOARD_URL);
+    await sleep(1500);
+
+    // Click notification bell in header
+    const bellBtn = page.locator('button[aria-label="Notifications"]').first();
+    if (await bellBtn.count() > 0) {
+      await bellBtn.hover();
+      await sleep(500);
+      await bellBtn.click();
+      await sleep(2000);
+      console.log("  ✅ Notification dropdown opened");
+
+      // Scroll through notifications
+      const notifDropdown = page.locator('[data-testid="notification-dropdown"], .notifications-dropdown').first();
+      await sleep(2000);
+
+      // Click Mark all read
+      const markReadBtn = page.getByRole("button", { name: /mark all read/i }).first();
+      if (await markReadBtn.count() > 0) {
+        await markReadBtn.hover();
+        await sleep(500);
+        await markReadBtn.click();
+        await sleep(2000);
+        console.log("  ✅ Notifications marked as read");
+      }
+
+      // Close dropdown
+      await bellBtn.click();
+      await sleep(1000);
+    } else {
+      console.log("  ℹ️  Bell button not found — notification feature visible in sidebar");
+    }
+    await sleep(2000);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 17 — Network Updates Dashboard
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 17 — Network Updates Dashboard");
+    await page.goto(`${DASHBOARD_URL}/updates`);
+    await page.waitForLoadState("networkidle");
+    await sleep(6000);
+    console.log("  ✅ Network updates page loaded");
+
+    // Hover over update items if visible
+    const updateRows = page.locator("table tbody tr").first();
+    if (await updateRows.count() > 0) {
+      await updateRows.hover();
+      await sleep(1000);
+      console.log("  ✅ Update rows visible");
+    } else {
+      console.log("  ℹ️  All sites up to date (empty state shown)");
+    }
+    await sleep(3000);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 18 — Finale: Overview
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 18 — Finale: Overview");
     await page.goto(`${DASHBOARD_URL}/sites`);
     await page.waitForLoadState("networkidle");
     await sleep(3000);

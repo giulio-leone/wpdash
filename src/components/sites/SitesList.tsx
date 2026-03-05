@@ -7,6 +7,7 @@ import AddSiteModal from "./AddSiteModal";
 import Button from "@/components/ui/button/Button";
 import { PlusIcon } from "@/icons";
 import { useSitesStore } from "@/stores/sites-store";
+import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 
 interface SitesListProps {
   initialSites: Site[];
@@ -67,20 +68,9 @@ export default function SitesList({ initialSites }: SitesListProps) {
         </div>
       )}
 
-      {sites.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 px-6 py-16 dark:border-gray-800">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-500/10">
-            <PlusIcon className="h-7 w-7 text-brand-500" />
-          </div>
-          <h3 className="mb-1 text-base font-semibold text-gray-900 dark:text-white">
-            No sites yet
-          </h3>
-          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-            Add your first WordPress site to start monitoring.
-          </p>
-          <Button onClick={() => setModalOpen(true)}>Add Your First Site</Button>
-        </div>
-      ) : (
+      {sites.length === 0 && !loading ? (
+        <OnboardingWizard />
+      ) : sites.length === 0 ? null : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {sites.map((site) => (
             <SiteCard
