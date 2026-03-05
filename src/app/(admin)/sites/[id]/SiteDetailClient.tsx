@@ -21,9 +21,10 @@ import UsersList from "@/components/users/UsersList";
 import ContentList from "@/components/content/ContentList";
 import WooCommerceHub from "@/components/woocommerce/WooCommerceHub";
 import DatabaseManager from "@/components/database/DatabaseManager";
+import UpdatesPanel from "@/components/updates/UpdatesPanel";
 import { cn } from "@/lib/cn";
 
-const tabs = ["Overview", "Uptime", "Security", "Plugins", "SEO", "Logs", "Backup", "Themes", "Users", "Content", "WooCommerce", "Database"] as const;
+const tabs = ["Overview", "Uptime", "Security", "Plugins", "SEO", "Logs", "Backup", "Themes", "Users", "Content", "WooCommerce", "Database", "Updates"] as const;
 
 function statusBadgeColor(status: string): "success" | "error" | "light" {
   if (status === "online") return "success";
@@ -215,6 +216,8 @@ export default function SiteDetailClient({ site }: { site: Site }) {
           <WooCommerceHub siteId={site.id} />
         ) : activeTab === "Database" ? (
           <DatabaseManager siteId={site.id} />
+        ) : activeTab === "Updates" ? (
+          <UpdatesPanel siteId={site.id} />
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">

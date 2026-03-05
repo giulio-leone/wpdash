@@ -189,7 +189,7 @@ async function setupAccount(): Promise<{ siteId: string }> {
   }
 
   console.log(`  ✅ Account ready — site: ${siteId}`);
-  return { siteId, accessToken: access_token };
+  return { siteId };
 }
 
 // ── Main recording ─────────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ async function main() {
 
   fs.mkdirSync(VIDEO_DIR, { recursive: true });
 
-  const { siteId, accessToken } = await setupAccount();
+  const { siteId } = await setupAccount();
 
   // ── Browser ────────────────────────────────────────────────
   const browser = await chromium.launch({ headless: true });
@@ -426,7 +426,7 @@ async function main() {
         headers: {
           "Content-Type": "application/json",
           apikey: SUPABASE_ANON,
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${SUPABASE_ANON}`,
           Prefer: "return=minimal",
         },
         body: JSON.stringify({ version: "1.7.2", has_update: false, latest_version: null }),
@@ -483,7 +483,6 @@ async function main() {
       console.log("  ✅ Autocomplete: selected Contact Form 7");
     } else {
       // Fallback: clear and type full slug
-      await slugInput.selectAll();
       await slugInput.fill("contact-form-7");
       await sleep(500);
       console.log("  ℹ️  Autocomplete not found — typed slug directly");
@@ -765,6 +764,46 @@ async function main() {
       await exportCsvBtn.click();
       await sleep(2000);
       console.log("  ✅ Network CSV export triggered");
+    }
+    await sleep(2000);
+
+    // ──────────────────────────────────────────────────────────
+    //  Scene 15b — Updates Panel
+    // ──────────────────────────────────────────────────────────
+    hr("Scene 15b — Updates Panel");
+    // Navigate back to site detail and open Updates tab
+    const siteDetailLink = page.locator(`a[href*="/sites/"]`).first();
+    await page.goto(`${DASHBOARD_URL}/sites`);
+    await page.waitForLoadState("networkidle");
+    await sleep(1500);
+    const siteLinkForUpdates = page.locator(`a[href*="/sites/"]`).first();
+    if (await siteLinkForUpdates.count() > 0) {
+      await siteLinkForUpdates.click();
+      await page.waitForLoadState("networkidle");
+      await sleep(2000);
+    }
+    await clickTab(page, "Updates");
+    await page.waitForLoadState("networkidle");
+    await sleep(5000);
+    console.log("  ✅ Updates tab loaded");
+
+    // Click Refresh button
+    const refreshUpdatesBtn = page.getByRole("button", { name: /refresh/i }).first();
+    if (await refreshUpdatesBtn.count() > 0) {
+      await refreshUpdatesBtn.hover();
+      await sleep(600);
+      await refreshUpdatesBtn.click();
+      await sleep(4000);
+      console.log("  ✅ Updates refreshed");
+    }
+
+    // If WP Core update available, hover over update button
+    const updateCoreBtn = page.getByRole("button", { name: /update wordpress/i }).first();
+    if (await updateCoreBtn.count() > 0) {
+      await updateCoreBtn.scrollIntoViewIfNeeded();
+      await updateCoreBtn.hover();
+      await sleep(1200);
+      console.log("  ✅ WP Core update button visible");
     }
     await sleep(2000);
 
